@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Platform Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; }
+    li { margin: .25rem 0; } code { background: #eee; padding: 0 .3rem; }
+  </style>
+</head>
+<body>
+  <h1>Platform Demo</h1>
+  <p>API version: <code id="ver">...</code></p>
+  <form id="f"><input id="p" placeholder="job payload" required> <button>Create job</button></form>
+  <h3>Latest jobs</h3>
+  <ul id="jobs"></ul>
+  <script>
+    async function refresh() {
+      try {
+        const v = await (await fetch('/api/version')).json();
+        document.getElementById('ver').textContent = v.version;
+        const jobs = await (await fetch('/api/jobs')).json();
+        document.getElementById('jobs').innerHTML =
+          jobs.map(j => `<li>#${j.id} ${j.payload} - <b>${j.status}</b></li>`).join('');
+      } catch (e) { document.getElementById('ver').textContent = 'error'; }
+    }
+    document.getElementById('f').addEventListener('submit', async e => {
+      e.preventDefault();
+      await fetch('/api/jobs', { method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ payload: document.getElementById('p').value }) });
+      document.getElementById('p').value = '';
+      refresh();
+    });
+    refresh(); setInterval(refresh, 3000);
+  </script>
+</body>
+</html>
