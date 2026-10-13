@@ -47,3 +47,31 @@ output "private_subnet_ids" {
 output "public_subnet_ids" {
   value = module.vpc.public_subnet_ids
 }
+
+variable "kubernetes_version" {
+  type    = string
+  default = "1.37"
+}
+
+variable "public_access_cidrs" {
+  type        = list(string)
+  description = "Your public IP as /32"
+  default     = ["165.50.79.148/32"]
+}
+
+module "eks" {
+  source = "../../modules/eks"
+
+  cluster_name        = local.cluster_name
+  kubernetes_version  = var.kubernetes_version
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  public_access_cidrs = var.public_access_cidrs
+}
+
+output "cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "oidc_provider_arn" {
+  value = module.eks.oidc_provider_arn
+}
