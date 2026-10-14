@@ -66,6 +66,8 @@ module "eks" {
   kubernetes_version  = var.kubernetes_version
   private_subnet_ids  = module.vpc.private_subnet_ids
   public_access_cidrs = var.public_access_cidrs
+  node_instance_types = ["m7i-flex.large"]
+  node_capacity_type  = "ON_DEMAND"
 }
 
 output "cluster_name" {
