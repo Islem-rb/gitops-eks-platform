@@ -1,0 +1,8 @@
+line-length = 100
+
+[lint]
+select = ["E", "F", "I"]
+
+[lint.per-file-ignores]
+# the test imports the app after adjusting sys.path
+"app/api/tests/*" = ["E402"]
