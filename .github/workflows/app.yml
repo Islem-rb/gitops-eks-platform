@@ -1,0 +1,114 @@
+name: app
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/app.yml"]
+  pull_request:
+    paths: ["app/**", ".github/workflows/app.yml"]
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          pip install ruff pytest httpx
+          pip install -r app/api/requirements.txt
+          pip install -r app/worker/requirements.txt
+      - name: Lint
+        run: ruff check app/
+      - name: Test API
+        run: pytest app/api/tests -q
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # needed for OIDC to AWS and for keyless cosign signing
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, worker, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Set image tag
+        run: echo "TAG=${GITHUB_SHA::12}" >> "$GITHUB_ENV"
+
+      - name: Build image (local, not pushed yet)
+        uses: docker/build-push-action@v6
+        with:
+          context: app/${{ matrix.service }}
+          load: true
+          tags: local/${{ matrix.service }}:${{ env.TAG }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Trivy vulnerability scan (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/${{ matrix.service }}:${{ env.TAG }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/${{ matrix.service }}:${{ env.TAG }}
+          format: cyclonedx
+          output: sbom-${{ matrix.service }}.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.cdx.json
+
+      # ---- everything below runs only on main, never on pull requests ----
+      - name: Configure AWS credentials (OIDC)
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        if: github.event_name == 'push'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image (skip if this tag already exists)
+        if: github.event_name == 'push'
+        run: |
+          REPO="platform/${{ matrix.service }}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/${REPO}:${TAG}"
+          if aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already in ECR (immutable), skipping push"
+          else
+            docker tag "local/${{ matrix.service }}:${TAG}" "$IMAGE"
+            docker push "$IMAGE"
+          fi
+          DIGEST=$(aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" \
+            --query 'imageDetails[0].imageDigest' --output text)
+          echo "IMAGE_DIGEST_REF=${{ steps.ecr.outputs.registry }}/${REPO}@${DIGEST}" >> "$GITHUB_ENV"
+
+      - uses: sigstore/cosign-installer@v3
+        if: github.event_name == 'push'
+
+      - name: Sign image (keyless, by digest)
+        if: github.event_name == 'push'
+        run: cosign sign --yes "$IMAGE_DIGEST_REF"

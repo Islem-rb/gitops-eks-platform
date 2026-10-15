@@ -1,0 +1,47 @@
+name: iac
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/**", ".github/workflows/iac.yml"]
+  pull_request:
+    paths: ["infra/**", ".github/workflows/iac.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Format check
+        run: terraform fmt -check -recursive infra
+
+      - name: Validate modules and environments
+        run: |
+          for dir in infra/modules/* infra/envs/*; do
+            echo "== $dir"
+            terraform -chdir="$dir" init -backend=false -input=false >/dev/null
+            terraform -chdir="$dir" validate
+          done
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: tflint
+        run: |
+          tflint --init
+          for dir in infra/modules/*; do
+            echo "== $dir"
+            tflint --chdir="$dir"
+          done
+
+      - name: Checkov (report only for now)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra
+          framework: terraform
+          soft_fail: true
