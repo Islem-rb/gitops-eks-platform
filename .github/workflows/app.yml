@@ -3,9 +3,9 @@ name: app
 on:
   push:
     branches: [main]
-    paths: ["app/**", ".github/workflows/app.yml"]
+    paths: ["app/**", "ruff.toml", ".github/workflows/app.yml"]
   pull_request:
-    paths: ["app/**", ".github/workflows/app.yml"]
+    paths: ["app/**", "ruff.toml", ".github/workflows/app.yml"]
 
 permissions:
   contents: read
