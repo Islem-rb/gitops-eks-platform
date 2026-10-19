@@ -6,3 +6,7 @@
 .terraform.lock.hcl.bak
 crash.log
 .env
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
