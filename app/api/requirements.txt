@@ -3,4 +3,4 @@ starlette>=0.40.0
 uvicorn[standard]==0.34.0
 psycopg[binary,pool]==3.2.3
 redis==5.2.1
-prometheus-client==0.21.1
+prometheus-client==0.26.0
