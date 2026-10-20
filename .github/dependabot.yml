@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: "/app/api"
+    schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: "/app/worker"
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: "/app/api"
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: "/app/worker"
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: "/app/frontend"
+    schedule: { interval: weekly }
