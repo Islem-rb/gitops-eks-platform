@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels: { app: worker }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: worker }
+  template:
+    metadata:
+      labels: { app: worker }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: worker
+          image: platform/worker:placeholder
+          ports: [{ name: metrics, containerPort: 9100 }]
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: app-db, key: DATABASE_URL } }
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          livenessProbe:
+            httpGet: { path: /metrics, port: metrics }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits: { memory: 192Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+  labels: { app: worker }
+spec:
+  selector: { app: worker }
+  ports: [{ name: metrics, port: 9100, targetPort: metrics }]
