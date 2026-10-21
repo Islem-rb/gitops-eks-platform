@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: api
+  namespace: demo
+spec:
+  selector:
+    matchLabels: { app: api }
+  namespaceSelector:
+    matchNames: [demo]
+  podTargetLabels: [app, rollouts-pod-template-hash]
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: worker
+  namespace: demo
+spec:
+  selector:
+    matchLabels: { app: worker }
+  namespaceSelector:
+    matchNames: [demo]
+  podTargetLabels: [app]
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s

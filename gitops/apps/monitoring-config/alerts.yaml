@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-api
+  namespace: monitoring
+spec:
+  groups:
+    - name: demo-api
+      rules:
+        - alert: ApiHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[2m]))
+            / sum(rate(http_requests_total{namespace="demo",app="api"}[2m])) > 0.05
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: "API 5xx error rate above 5%"
+            description: "More than 5% of API requests failed over the last 2 minutes."
+        - alert: ApiHighLatencyP95
+          expr: |
+            histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="demo",app="api"}[5m]))) > 0.5
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "API p95 latency above 500ms"
+        - alert: ApiDown
+          expr: absent(up{namespace="demo",app="api"} == 1)
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: "No API pod is being scraped successfully"

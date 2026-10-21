@@ -13,7 +13,7 @@ spec:
       successCondition: result[0] < 0.05
       provider:
         prometheus:
-          address: http://prometheus-server.monitoring.svc.cluster.local
+          address: http://kps-prometheus.monitoring.svc.cluster.local:9090
           query: >-
             (sum(rate(http_requests_total{namespace="demo",status=~"5..",rollouts_pod_template_hash="{{args.canary-hash}}"}[1m])) or vector(0))
             / sum(rate(http_requests_total{namespace="demo",rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]))
