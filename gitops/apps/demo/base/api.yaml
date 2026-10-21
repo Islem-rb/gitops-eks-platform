@@ -25,7 +25,7 @@ spec:
             - name: REDIS_URL
               value: redis://redis:6379/0
             - name: APP_VERSION
-              value: v1
+              value: v2
             - name: FAIL_RATE
               value: "0"
           securityContext:
