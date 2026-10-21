@@ -9,7 +9,7 @@ spec:
       match:
         any: [{ resources: { kinds: [Pod], namespaces: [demo] } }]
       validate:
-        failureAction: Audit
+        failureAction: Enforce
         message: "Images must have an explicit tag."
         pattern:
           spec:
@@ -19,7 +19,7 @@ spec:
       match:
         any: [{ resources: { kinds: [Pod], namespaces: [demo] } }]
       validate:
-        failureAction: Audit
+        failureAction: Enforce
         message: "The ':latest' tag is not allowed."
         pattern:
           spec:
