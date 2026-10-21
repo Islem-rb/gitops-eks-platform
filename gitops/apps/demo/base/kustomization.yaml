@@ -6,3 +6,4 @@ resources:
   - api.yaml
   - worker.yaml
   - frontend.yaml
+  - analysis.yaml

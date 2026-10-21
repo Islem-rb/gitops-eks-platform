@@ -4,6 +4,7 @@ namespace: demo
 resources:
   - ../../base
   - secret.yaml
+  - loadgen.yaml
 images:
   - { name: platform/api,      newTag: local }
   - { name: platform/worker,   newTag: local }

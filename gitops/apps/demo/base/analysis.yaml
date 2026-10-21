@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: api-error-rate
+spec:
+  args:
+    - name: canary-hash
+  metrics:
+    - name: error-rate
+      interval: 15s
+      initialDelay: 45s
+      failureLimit: 1
+      successCondition: result[0] < 0.05
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: >-
+            (sum(rate(http_requests_total{namespace="demo",status=~"5..",rollouts_pod_template_hash="{{args.canary-hash}}"}[1m])) or vector(0))
+            / sum(rate(http_requests_total{namespace="demo",rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]))
