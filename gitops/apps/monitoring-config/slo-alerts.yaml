@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: api-slo-burn
+  namespace: monitoring
+spec:
+  groups:
+    - name: api-slo-burn
+      rules:
+        # SLO 99% => error budget 0.01. Burn rate 14.4 exhausts a 30d budget in about 2 days.
+        - alert: ApiErrorBudgetFastBurn
+          expr: |
+            (
+              (sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[5m])) or vector(0))
+              / sum(rate(http_requests_total{namespace="demo",app="api"}[5m])) > 14.4 * 0.01
+            ) and (
+              (sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[1h])) or vector(0))
+              / sum(rate(http_requests_total{namespace="demo",app="api"}[1h])) > 14.4 * 0.01
+            )
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: "API is burning its error budget 14x too fast"
+        - alert: ApiErrorBudgetSlowBurn
+          expr: |
+            (
+              (sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[30m])) or vector(0))
+              / sum(rate(http_requests_total{namespace="demo",app="api"}[30m])) > 6 * 0.01
+            ) and (
+              (sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[6h])) or vector(0))
+              / sum(rate(http_requests_total{namespace="demo",app="api"}[6h])) > 6 * 0.01
+            )
+          for: 15m
+          labels: { severity: warning }
+          annotations:
+            summary: "API is burning its error budget 6x too fast"
