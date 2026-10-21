@@ -7,3 +7,4 @@ resources:
   - worker.yaml
   - frontend.yaml
   - analysis.yaml
+  - networkpolicies.yaml
