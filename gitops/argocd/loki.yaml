@@ -31,7 +31,7 @@ spec:
           pattern_ingester: { enabled: true }
         singleBinary:
           replicas: 1
-          persistence: { enabled: false }
+          persistence: { enabled: true, size: 2Gi }
           resources:
             requests: { cpu: 100m, memory: 256Mi }
             limits: { memory: 512Mi }
