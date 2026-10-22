@@ -35,7 +35,8 @@ spec:
             - { name: data, mountPath: /var/lib/postgresql/data }
       volumes:
         - name: data
-          emptyDir: {}   # demo only: data is lost when the pod restarts
+          persistentVolumeClaim:
+            claimName: postgres-data   # demo only: data is lost when the pod restarts
 ---
 apiVersion: v1
 kind: Service
@@ -44,3 +45,13 @@ metadata:
 spec:
   selector: { app: postgres }
   ports: [{ port: 5432, targetPort: pg }]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
