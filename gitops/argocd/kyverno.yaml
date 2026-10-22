@@ -11,6 +11,12 @@ spec:
     targetRevision: 3.9.2
     helm:
       releaseName: kyverno
+      valuesObject:
+        # kind (single node, small VM): the client-go WatchList stream stalls ~55s and the
+        # controllers give up on cache sync. Fall back to the classic list+watch.
+        extraEnvVars:
+          - name: KUBE_FEATURE_WatchListClient
+            value: "false"
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
