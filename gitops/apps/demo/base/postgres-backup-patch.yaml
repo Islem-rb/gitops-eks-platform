@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  template:
+    metadata:
+      annotations:
+        backup.velero.io/backup-volumes: backup
+        backup.velero.io/backup-volumes-excludes: data
+        pre.hook.backup.velero.io/container: postgres
+        pre.hook.backup.velero.io/command: '["/bin/sh","-c","pg_dump -U \"$POSTGRES_USER\" --clean --if-exists \"$POSTGRES_DB\" > /backup/dump.sql"]'
+        pre.hook.backup.velero.io/on-error: Fail
+        pre.hook.backup.velero.io/timeout: 120s
+        post.hook.restore.velero.io/container: postgres
+        post.hook.restore.velero.io/command: '["/bin/sh","-c","until pg_isready -U \"$POSTGRES_USER\"; do sleep 2; done; psql -v ON_ERROR_STOP=1 -U \"$POSTGRES_USER\" \"$POSTGRES_DB\" < /backup/dump.sql"]'
+        post.hook.restore.velero.io/wait-timeout: 5m
+        post.hook.restore.velero.io/exec-timeout: 2m
+        post.hook.restore.velero.io/on-error: Fail
+    spec:
+      containers:
+        - name: postgres
+          volumeMounts:
+            - { name: backup, mountPath: /backup }
+      volumes:
+        - { name: backup, emptyDir: {} }

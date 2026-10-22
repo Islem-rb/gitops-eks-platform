@@ -8,3 +8,6 @@ resources:
   - frontend.yaml
   - analysis.yaml
   - networkpolicies.yaml
+
+patches:
+  - path: postgres-backup-patch.yaml
