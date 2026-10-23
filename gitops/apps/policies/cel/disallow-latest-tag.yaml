@@ -4,10 +4,10 @@ metadata:
   name: disallow-latest-tag
 spec:
   validationActions:
-    - Deny
+    - Audit
   evaluation:
     background:
-      enabled: false
+      enabled: true
   matchConstraints:
     resourceRules:
       - apiGroups: [""]
@@ -15,8 +15,8 @@ spec:
         operations: ["CREATE", "UPDATE"]
         resources: ["pods"]
   matchConditions:
-    - name: lab-namespace-only
-      expression: object.metadata.namespace == "kyverno-lab"
+    - name: lab-and-demo-only
+      expression: object.metadata.namespace in ["kyverno-lab", "demo"]
   validations:
     - expression: |
         object.spec.containers.all(c,
