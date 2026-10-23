@@ -1,0 +1,39 @@
+name: terraform-test
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/**", ".github/workflows/iac-test.yml"]
+  pull_request:
+    paths: ["infra/**", ".github/workflows/iac-test.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ">=1.10.0"
+          terraform_wrapper: false
+
+      - name: Module tests (mocked provider, no AWS access needed)
+        run: |
+          for m in iam ecr vpc; do
+            echo "::group::terraform test $m"
+            (cd infra/modules/$m && terraform init -backend=false -input=false && terraform test)
+            echo "::endgroup::"
+          done
+
+      - name: Validate every environment (staging and prod are plan-only, never applied)
+        run: |
+          for e in dev shared staging prod; do
+            echo "::group::validate $e"
+            terraform -chdir=infra/envs/$e init -backend=false -input=false
+            terraform -chdir=infra/envs/$e validate
+            echo "::endgroup::"
+          done
