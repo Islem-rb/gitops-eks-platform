@@ -1,0 +1,26 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  matchConditions:
+    - name: lab-namespace-only
+      expression: object.metadata.namespace == "kyverno-lab"
+  validations:
+    - message: "Container images must specify an explicit tag other than latest."
+      expression: |
+        object.spec.containers.all(c,
+          c.image.matches("^[^@]+:[^/:]+$")
+          && !c.image.endsWith(":latest")
+        )
