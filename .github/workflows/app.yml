@@ -111,7 +111,15 @@ jobs:
 
       - name: Sign image (keyless, by digest)
         if: github.event_name == 'push'
-        run: cosign sign --yes "$IMAGE_DIGEST_REF"
+        run: |
+          if cosign verify \
+              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$IMAGE_DIGEST_REF" >/dev/null 2>&1; then
+            echo "Digest already signed, skipping"
+          else
+            cosign sign --yes "$IMAGE_DIGEST_REF"
+          fi
 
   # After every image is built, pushed and signed, record the new tag in Git so Argo CD deploys it.
   bump-gitops:
