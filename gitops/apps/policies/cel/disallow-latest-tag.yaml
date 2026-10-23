@@ -4,7 +4,7 @@ metadata:
   name: disallow-latest-tag
 spec:
   validationActions:
-    - Audit
+    - Deny
   evaluation:
     background:
       enabled: true
