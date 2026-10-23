@@ -20,8 +20,8 @@ spec:
   matchImageReferences:
     - glob: "455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/*"
   credentials:
-  secrets:
-    - ecr-credentials-test
+    secrets:
+      - ecr-credentials-test
   attestors:
     - name: githubActions
       cosign:
