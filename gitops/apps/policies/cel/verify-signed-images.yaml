@@ -1,0 +1,37 @@
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-ecr-image-signatures
+spec:
+  validationActions:
+    - Audit
+  failurePolicy: Ignore
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  matchImageReferences:
+    - glob: "455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/*"
+  credentials:
+    providers:
+      - amazon
+  attestors:
+    - name: githubActions
+      cosign:
+        keyless:
+          identities:
+            - issuer: "https://token.actions.githubusercontent.com"
+              subject: "https://github.com/Islem-rb/gitops-eks-platform/.github/workflows/app.yml@refs/heads/main"
+        ctlog:
+          url: "https://rekor.sigstore.dev"
+  validations:
+    - message: "ECR images must have a valid Cosign signature from the trusted GitHub Actions workflow."
+      expression: >-
+        images.containers.map(image,
+          verifyImageSignatures(image, [attestors.githubActions])
+        ).all(result, result > 0)

@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - require-resources.yaml
   - disallow-latest-tag.yaml
+  - verify-signed-images.yaml
