@@ -50,7 +50,7 @@ jobs:
         run: echo "TAG=${GITHUB_SHA::12}" >> "$GITHUB_ENV"
 
       - name: Build image (local, not pushed yet)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: app/${{ matrix.service }}
           load: true
