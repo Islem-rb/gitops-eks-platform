@@ -112,3 +112,43 @@ jobs:
       - name: Sign image (keyless, by digest)
         if: github.event_name == 'push'
         run: cosign sign --yes "$IMAGE_DIGEST_REF"
+
+  # After every image is built, pushed and signed, record the new tag in Git so Argo CD deploys it.
+  bump-gitops:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: gitops-bump
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update image tags in the EKS overlay
+        run: |
+          TAG="${GITHUB_SHA::12}"
+          python3 - "$TAG" <<'PY'
+          import re, sys
+          tag = sys.argv[1]
+          p = "gitops/apps/demo/overlays/eks/kustomization.yaml"
+          s = open(p).read()
+          s, n = re.subn(r'(newTag:\s*)"?[^"\s]+"?', r'\g<1>"' + tag + '"', s)
+          assert n == 3, f"expected 3 newTag lines, found {n}"
+          open(p, "w").write(s)
+          PY
+
+      - name: Commit and push
+        run: |
+          TAG="${GITHUB_SHA::12}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then echo "Overlay already at $TAG, nothing to do"; exit 0; fi
+          git add gitops/apps/demo/overlays/eks/kustomization.yaml
+          git commit -m "chore(gitops): deploy ${TAG} to eks overlay"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1

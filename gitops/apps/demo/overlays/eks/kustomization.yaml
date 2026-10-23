@@ -1,0 +1,18 @@
+# EKS overlay. The image tags below are updated automatically by CI (job bump-gitops in app.yml).
+# Not deployable until External Secrets provides the app-db secret (EKS session).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: demo
+resources:
+  - ../../base
+  - loadgen.yaml
+images:
+  - name: platform/api
+    newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/api
+    newTag: "ba1ba7b4fcea"
+  - name: platform/worker
+    newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/worker
+    newTag: "ba1ba7b4fcea"
+  - name: platform/frontend
+    newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/frontend
+    newTag: "ba1ba7b4fcea"
