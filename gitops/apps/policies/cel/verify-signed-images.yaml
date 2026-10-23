@@ -20,6 +20,8 @@ spec:
   credentials:
     providers:
       - amazon
+    secrets:
+      - ecr-credentials-test
   attestors:
     - name: githubActions
       cosign:
