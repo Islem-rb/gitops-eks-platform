@@ -18,9 +18,9 @@ spec:
     - name: lab-namespace-only
       expression: object.metadata.namespace == "kyverno-lab"
   validations:
-    - message: "Container images must specify an explicit tag other than latest."
-      expression: |
+    - expression: |
         object.spec.containers.all(c,
-          c.image.matches("^[^@]+:[^/:]+$")
-          && !c.image.endsWith(":latest")
+          c.image.matches("^[^@]+:[^/:@]+(@sha256:[a-f0-9]{64})?$")
+          && !c.image.matches("^.*:latest(@sha256:[a-f0-9]{64})?$")
         )
+      message: Container images must specify an explicit tag other than latest.
