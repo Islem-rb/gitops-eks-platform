@@ -6,6 +6,8 @@ spec:
   validationActions:
     - Audit
   failurePolicy: Ignore
+  webhookConfiguration:
+    timeoutSeconds: 20
   evaluation:
     background:
       enabled: false
