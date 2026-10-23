@@ -17,3 +17,8 @@ variable "name" {
   type    = string
   default = "platform-github-ci"
 }
+
+variable "plan_name" {
+  type    = string
+  default = "platform-github-plan"
+}

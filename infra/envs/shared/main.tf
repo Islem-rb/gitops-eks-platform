@@ -55,3 +55,7 @@ output "repository_urls" {
 output "ci_role_arn" {
   value = module.iam.ci_role_arn
 }
+
+output "plan_role_arn" {
+  value = module.iam.plan_role_arn
+}

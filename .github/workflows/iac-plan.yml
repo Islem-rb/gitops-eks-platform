@@ -1,0 +1,78 @@
+name: terraform-plan
+
+on:
+  pull_request:
+    paths: ["infra/**", ".github/workflows/iac-plan.yml"]
+  schedule:
+    - cron: "17 5 * * 1" # Mondays 05:17 UTC: drift check
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_github_repo: ${{ vars.TF_GITHUB_REPO }}
+
+jobs:
+  plan-shared:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write # OIDC to AWS
+      pull-requests: write # PR comment
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ">=1.10.0"
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials (read-only plan role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Init
+        run: terraform -chdir=infra/envs/shared init -input=false
+
+      - name: Plan (read-only, no state lock, never applies)
+        id: plan
+        run: |
+          set +e
+          terraform -chdir=infra/envs/shared plan -input=false -lock=false -no-color -detailed-exitcode > /tmp/plan.txt 2>&1
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          {
+            echo '### terraform plan (envs/shared)'
+            echo "exit code: $code (0 = no changes, 2 = changes, 1 = error)"
+            echo '```'
+            tail -c 60000 /tmp/plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Comment the plan on the pull request
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('/tmp/plan.txt', 'utf8').slice(-60000);
+            const code = '${{ steps.plan.outputs.code }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
+              body: `### terraform plan (envs/shared), exit code ${code}\n\`\`\`\n${plan}\n\`\`\``
+            });
+
+      - name: Decide the result
+        run: |
+          code="${{ steps.plan.outputs.code }}"
+          if [ "$code" = "1" ]; then echo "terraform plan failed"; exit 1; fi
+          if [ "$code" = "2" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "DRIFT: real AWS state differs from the code"; exit 1
+          fi
+          echo "plan exit code $code: OK"
