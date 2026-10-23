@@ -11,6 +11,7 @@ All numbers come from a **single-node kind cluster on one VM** with synthetic tr
 | Disaster recovery drill (namespace `demo` deleted, restored with Velero + `pg_dump` hooks) | Pods ready in **96 s**, marker record present in the database at **97 s** (previous cluster: 112 s / 113 s) | 2026-10-23 |
 | Image signature policy (Kyverno ImageValidatingPolicy, Audit mode) | Signed image: `pass`. Unsigned image: `fail` (admitted because Audit does not block) | 2026-10-23 |
 | NetworkPolicies (default deny) | Cross-namespace request to the api blocked; app flow and Prometheus scraping still work | 2026-10-22 |
+| Admission policies enforced (Kyverno CEL, `Deny`, namespaces `demo` and `kyverno-lab`) | `nginx:latest` rejected ("Container images must specify an explicit tag other than latest"); a pod without requests/limits rejected; a correct pod accepted; worker and api pods recreated under enforcement | 2026-10-23 |
 
 ## Reproduce
 ```bash
