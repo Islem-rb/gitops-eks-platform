@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) before plan/apply.
+# GitHub issues OIDC tokens with the IMMUTABLE form of the repo name, so the trust policy
+# must use owner@owner-id/repo@repo-id. A plain owner/name will NOT match and CI cannot assume the role.
+github_repo = "Islem-rb@187129681/gitops-eks-platform@1420932001"

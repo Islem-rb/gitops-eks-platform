@@ -27,6 +27,11 @@ variable "region" {
 variable "github_repo" {
   type        = string
   description = "owner/name of the GitHub repository"
+
+  validation {
+    condition     = can(regex("^[^/]+/[^/]+$", var.github_repo))
+    error_message = "github_repo must be owner/name (the immutable-ID form owner@id/repo@id also matches). An empty value would break the CI role trust policy."
+  }
 }
 
 module "ecr" {

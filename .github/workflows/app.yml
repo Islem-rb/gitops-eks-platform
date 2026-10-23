@@ -113,7 +113,7 @@ jobs:
         if: github.event_name == 'push'
         run: |
           if cosign verify \
-              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/" \
+              --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/app.yml@refs/heads/main" \
               --certificate-oidc-issuer https://token.actions.githubusercontent.com \
               "$IMAGE_DIGEST_REF" >/dev/null 2>&1; then
             echo "Digest already signed, skipping"

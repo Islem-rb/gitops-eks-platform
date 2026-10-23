@@ -10,3 +10,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# saved Terraform plans can embed variable values
+tfplan
+*.tfplan
