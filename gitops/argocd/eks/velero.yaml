@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://vmware-tanzu.github.io/helm-charts
+    chart: velero
+    targetRevision: 12.2.1
+    helm:
+      releaseName: velero
+      valuesObject:
+        configuration:
+          backupStorageLocation:
+            - name: default
+              provider: aws
+              bucket: velero-backups-455939971919-eu-central-1
+              config:
+                region: eu-central-1
+          defaultVolumesToFsBackup: true
+        snapshotsEnabled: false
+        deployNodeAgent: true
+        credentials:
+          useSecret: false # credentials come from EKS Pod Identity (see modules/workload-identity)
+        serviceAccount:
+          server:
+            create: true
+            name: velero-server
+        initContainers:
+          - name: velero-plugin-for-aws
+            image: velero/velero-plugin-for-aws:v1.12.0
+            volumeMounts:
+              - { mountPath: /target, name: plugins }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
