@@ -56,7 +56,11 @@ variable "kubernetes_version" {
 variable "public_access_cidrs" {
   type        = list(string)
   description = "Your public IP as /32"
-  default     = ["165.50.79.148/32"]
+
+  validation {
+    condition     = length(var.public_access_cidrs) > 0 && !contains(var.public_access_cidrs, "0.0.0.0/0")
+    error_message = "Set public_access_cidrs in terraform.tfvars (your current IP as /32). It must not be 0.0.0.0/0."
+  }
 }
 
 module "eks" {
@@ -76,4 +80,22 @@ output "cluster_name" {
 
 output "oidc_provider_arn" {
   value = module.eks.oidc_provider_arn
+}
+
+data "aws_caller_identity" "current" {}
+
+module "workload_identity" {
+  source = "../../modules/workload-identity"
+
+  cluster_name       = module.eks.cluster_name
+  region             = var.region
+  velero_bucket_name = "velero-backups-${data.aws_caller_identity.current.account_id}-${var.region}"
+}
+
+output "external_secrets_role_arn" {
+  value = module.workload_identity.external_secrets_role_arn
+}
+
+output "velero_role_arn" {
+  value = module.workload_identity.velero_role_arn
 }

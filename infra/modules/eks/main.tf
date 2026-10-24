@@ -144,11 +144,56 @@ resource "aws_eks_node_group" "default" {
 }
 
 # --- Add-ons ---
-resource "aws_eks_addon" "this" {
-  for_each = toset(["vpc-cni", "kube-proxy", "coredns", "eks-pod-identity-agent"])
+locals {
+  addon_configuration = {
+    # EKS ignores Kubernetes NetworkPolicies unless the VPC CNI network policy agent is switched on
+    "vpc-cni"                = jsonencode({ enableNetworkPolicy = "true" })
+    "kube-proxy"             = null
+    "coredns"                = null
+    "eks-pod-identity-agent" = null
+  }
+}
 
-  cluster_name = aws_eks_cluster.this.name
-  addon_name   = each.key
+resource "aws_eks_addon" "this" {
+  for_each = local.addon_configuration
+
+  cluster_name         = aws_eks_cluster.this.name
+  addon_name           = each.key
+  configuration_values = each.value
 
   depends_on = [aws_eks_node_group.default]
+}
+
+# --- EBS CSI driver: needed for PersistentVolumeClaims on current Kubernetes versions ---
+data "aws_iam_policy_document" "pod_identity_assume" {
+  statement {
+    actions = ["sts:AssumeRole", "sts:TagSession"]
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi" {
+  name               = "${var.cluster_name}-ebs-csi"
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  role       = aws_iam_role.ebs_csi.name
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.this.name
+  addon_name   = "aws-ebs-csi-driver"
+
+  pod_identity_association {
+    role_arn        = aws_iam_role.ebs_csi.arn
+    service_account = "ebs-csi-controller-sa"
+  }
+
+  # the Pod Identity agent must exist before the driver asks for credentials
+  depends_on = [aws_eks_addon.this, aws_iam_role_policy_attachment.ebs_csi]
 }
