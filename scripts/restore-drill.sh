@@ -59,7 +59,7 @@ kubectl -n demo wait --for=condition=ready pod -l app=loadgen --timeout=240s
 # restored pods. Detect it, restart the agent on the affected nodes, and record that we had to.
 AGENT_RESTART=no; DNS_OK=no
 for i in 1 2 3 4 5 6; do
-  kubectl -n demo exec deploy/loadgen -- nslookup -timeout=3 postgres >/dev/null 2>&1 && { DNS_OK=yes; break; }; sleep 5
+  kubectl -n demo exec deploy/loadgen -- nslookup -timeout=3 postgres 2>&1 | grep -q "postgres.demo.svc.cluster.local" && { DNS_OK=yes; break; }; sleep 5
 done
 if [ "$DNS_OK" = no ]; then
   AGENT_RESTART=yes

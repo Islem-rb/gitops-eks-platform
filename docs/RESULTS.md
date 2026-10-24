@@ -33,6 +33,6 @@ bash scripts/restore-drill.sh         # aborts unless the backup is clean
 | Secrets | External Secrets read both secrets from AWS Secrets Manager via EKS Pod Identity; no credentials in Git or Terraform state |
 | Good canary (20% -> 60% -> 100%) | promoted in 439 s, 8/8 analysis measurements at error rate 0 |
 | Bad canary (50% injected failures) | aborted automatically in 328 s; measurements 0.41 and 0.38 against a 0.05 threshold; the 5 stable pods kept serving |
-| Velero restore from S3 (namespace deleted, pg_dump restore hook) | data back in 202 s, application serving in 204 s; required a CNI policy-agent restart (see ADR 0004), reproduced twice |
+| Velero restore from S3 (namespace deleted, pg_dump restore hook) | first run: data restored but pods lost DNS until the node's CNI agent was restarted (open issue, ADR 0004); second run: data back in 202 s, application serving in 204 s |
 | `terraform destroy` + leftover check | 9 min 17 s; no clusters, NAT gateways, elastic IPs, volumes, load balancers or instances left |
 | Session cost | about 2 h 15 min of cluster time, roughly $1-1.50 |

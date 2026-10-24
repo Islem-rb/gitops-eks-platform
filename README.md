@@ -19,7 +19,7 @@ All numbers come from a real EKS run (eu-central-1, Kubernetes 1.37, 2 x `m7i-fl
 | Bootstrap: Argo CD, Argo Rollouts, 8 applications | 1 min 16 s, all Synced/Healthy about 5 min later |
 | Good release (canary 20% → 60% → 100%) | promoted in 439 s, 8/8 analysis measurements at error rate 0 |
 | Bad release (50% injected failures) | **aborted automatically in 328 s**; measured 0.41 and 0.38 against a 0.05 threshold; stable pods kept serving |
-| Namespace deleted, restored from S3 with Velero | data back in 202 s, app serving in 204 s (see [ADR 0004](docs/adr/0004-restart-cni-policy-agent-after-namespace-restore.md)) |
+| Namespace deleted, restored from S3 with Velero | data restored; on the second run the app was serving again in 204 s (a DNS problem seen on the first run is open, see [ADR 0004](docs/adr/0004-dns-failure-after-namespace-restore-on-eks.md)) |
 | `terraform destroy` and leftover check | 9 min 17 s, nothing left billing |
 | Cost of the session | about 2 h 15 min of cluster time, roughly $1 to $1.50 (estimate from hourly prices) |
 
@@ -59,7 +59,7 @@ All numbers come from a real EKS run (eu-central-1, Kubernetes 1.37, 2 x `m7i-fl
 
 These are real failures from building it, not a polished story:
 
-- **A restored namespace had no working DNS on EKS.** Data was back, but pods could not resolve service names until the VPC CNI policy agent on the node was restarted. It reproduced twice. The drill now detects it, applies the workaround and records it. Root cause is still open ([ADR 0004](docs/adr/0004-restart-cni-policy-agent-after-namespace-restore.md)). An early version of the drill also reported a false `DATA LOST`, because it checked through the API instead of the database.
+- **After the first restore on EKS, the restored pods could not resolve DNS** for over ten minutes. The data was back, but the app was down until the VPC CNI agent on that node was restarted. I have seen it once; kind does not show it. My first detection of it was wrong (a BusyBox `nslookup` exit-code quirk gave false alarms), so I do not call it reproducible, and it is documented as open in [ADR 0004](docs/adr/0004-dns-failure-after-namespace-restore-on-eks.md). An early version of the drill also reported a false `DATA LOST`, because it checked through the API instead of the database.
 - **cosign refused to re-sign an unchanged image digest** (`TAG_INVALID`). Fixed by verifying before signing.
 - **OIDC trust failed in CI** until the role trust policy matched GitHub's immutable subject claims and the IAM policy included `ecr:GetDownloadUrlForLayer`.
 - **Velero's volume backup captured nothing on kind** because the volumes were `hostPath`. Replaced with application-consistent pg_dump hooks.
@@ -114,7 +114,7 @@ The Velero backup bucket lives in the permanent `shared` stack, so backups survi
 
 ## Decisions
 
-[0001 record decisions](docs/adr/0001-record-architecture-decisions.md) · [0002 Postgres backups with pg_dump hooks](docs/adr/0002-postgres-backups-with-pg-dump-hooks.md) · [0003 image-signature policy, audit first](docs/adr/0003-image-signature-policy-audit-first.md) · [0004 restart the CNI policy agent after a namespace restore](docs/adr/0004-restart-cni-policy-agent-after-namespace-restore.md)
+[0001 record decisions](docs/adr/0001-record-architecture-decisions.md) · [0002 Postgres backups with pg_dump hooks](docs/adr/0002-postgres-backups-with-pg-dump-hooks.md) · [0003 image-signature policy, audit first](docs/adr/0003-image-signature-policy-audit-first.md) · [0004 DNS failure after a namespace restore on EKS (open)](docs/adr/0004-dns-failure-after-namespace-restore-on-eks.md)
 
 ## Limits and what is not done
 
@@ -124,6 +124,6 @@ Stated plainly, because they matter:
 - **Image-signature enforcement is not enabled on EKS.** Signing and verification work and the policy was proven in audit mode on kind. Enforcing it on EKS needs registry credentials delivered through Pod Identity first.
 - **Postgres is a single pod** with dump-based recovery, not a replicated database. Recovery time is minutes, not seconds.
 - **No ingress, DNS or TLS.** The UIs are reached with `kubectl port-forward`.
-- **The CNI agent restart after a restore is a workaround**, not an explained fix.
+- **A DNS failure after a restore on EKS was observed once** and is not explained or reproduced.
 - **Secret rotation is not automated.**
 - **Cost figures are estimates** from hourly prices, not billing data.
