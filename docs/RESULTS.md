@@ -24,3 +24,15 @@ bash scripts/restore-drill.sh         # aborts unless the backup is clean
 ## Known limits
 - Signature policy is Audit-only (see ADR 0003). Image-pull credentials for verification are a 12-hour ECR token on kind.
 - Backups on kind use an in-cluster S3 store; on EKS they must go to a real bucket.
+
+## EKS session 1 (2026-10-24, eu-central-1, 2 x m7i-flex.large, Kubernetes 1.37)
+| Measurement | Result |
+|---|---|
+| `terraform apply` (41 resources: VPC, EKS, add-ons, Pod Identity roles) | 11 min 51 s |
+| Bootstrap (Argo CD, Argo Rollouts, 8 applications) | 1 min 16 s; all apps Synced/Healthy about 5 min later |
+| Secrets | External Secrets read both secrets from AWS Secrets Manager via EKS Pod Identity; no credentials in Git or Terraform state |
+| Good canary (20% -> 60% -> 100%) | promoted in 439 s, 8/8 analysis measurements at error rate 0 |
+| Bad canary (50% injected failures) | aborted automatically in 328 s; measurements 0.41 and 0.38 against a 0.05 threshold; the 5 stable pods kept serving |
+| Velero restore from S3 (namespace deleted, pg_dump restore hook) | data back in 202 s, application serving in 204 s; required a CNI policy-agent restart (see ADR 0004), reproduced twice |
+| `terraform destroy` + leftover check | 9 min 17 s; no clusters, NAT gateways, elastic IPs, volumes, load balancers or instances left |
+| Session cost | about 2 h 15 min of cluster time, roughly $1-1.50 |
