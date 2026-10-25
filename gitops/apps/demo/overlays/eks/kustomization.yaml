@@ -9,10 +9,10 @@ resources:
 images:
   - name: platform/api
     newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/api
-    newTag: "f64dbb94a5d5"
+    newTag: "82c3a2f3019a"
   - name: platform/worker
     newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/worker
-    newTag: "f64dbb94a5d5"
+    newTag: "82c3a2f3019a"
   - name: platform/frontend
     newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/frontend
-    newTag: "f64dbb94a5d5"
+    newTag: "82c3a2f3019a"
