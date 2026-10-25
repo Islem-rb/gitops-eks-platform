@@ -1,4 +1,4 @@
-# ADR 0004: DNS failure after a namespace restore on EKS (observed once, cause not established)
+# ADR 0004: DNS failure after a namespace restore on EKS (observed on two EKS restores, cause not established)
 
 Status: open
 
@@ -17,13 +17,15 @@ restarted api and frontend pods then became Ready.
   positive. We cannot tell whether the restart was needed in the second run.
 - On kind (no VPC CNI), a restore from backup gave working DNS immediately (restore complete, 118/118 items, DNS OK at 0 s).
 - The drill now checks for the actual answer in the `nslookup` output.
+- Third drill (EKS, 2026-10-25, second session): the corrected check reported a DNS failure after the restore
+  (`network agent restart needed: yes`); data was back in 196 s and the app serving in 198 s after the restart. So the failure was
+  seen on 2 of 2 EKS restores with a valid detector or manual proof, and on 0 of 1 kind restores.
 
 ## Decision
 Keep the corrected DNS check in `scripts/restore-drill.sh`. If DNS really fails after a restore, it restarts the `aws-node` pod on
 the affected nodes, bounces the api and frontend pods, and prints that it did. No claim is made about the root cause.
 
 ## Next steps
-- The next EKS session is the reproduction test. If the corrected check reports a DNS failure again, suspect the node agent's
-  policy state: read the agent logs from a node debug pod and compare agent versions. If it does not, the first failure was a
-  one-off.
-- Until it reproduces, this is not described as a known bug or a known fix.
+- It reproduced: the corrected check reported a DNS failure after the restore on 2026-10-25 (see above). Suspect the node agent's
+  policy state: read the agent logs from a node debug pod and compare agent versions.
+- Until the root cause is known, the agent restart is described as a mitigation, not as an explanation.

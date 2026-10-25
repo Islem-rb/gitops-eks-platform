@@ -36,3 +36,12 @@ bash scripts/restore-drill.sh         # aborts unless the backup is clean
 | Velero restore from S3 (namespace deleted, pg_dump restore hook) | first run: data restored but pods lost DNS until the node's CNI agent was restarted (open issue, ADR 0004); second run: data back in 202 s, application serving in 204 s |
 | `terraform destroy` + leftover check | 9 min 17 s; no clusters, NAT gateways, elastic IPs, volumes, load balancers or instances left |
 | Session cost | about 2 h 15 min of cluster time, roughly $1-1.50 |
+
+## EKS session 2 (2026-10-25, same setup)
+| Measurement | Result |
+|---|---|
+| Bad canary (50% injected failures) | aborted automatically in 245 s; measurements 0.430 and 0.424 against a 0.05 threshold; the 5 stable pods kept serving |
+| Velero restore from S3 (namespace deleted) | marker row present in Postgres and served by the API; data back in 196 s, app serving in 198 s |
+| DNS after the restore | failed again; the corrected check reported `network agent restart needed: yes` and the mitigation restored service (ADR 0004) |
+| `terraform destroy` + leftover check | 10 min 36 s; no clusters, NAT gateways, elastic IPs, volumes, load balancers or instances left |
+| Cluster time | about 75 minutes, roughly $0.60 to $0.70 |
