@@ -7,7 +7,65 @@ A production-style delivery platform, built end to end: **a `git push` becomes a
 
 The workload is a small job-queue app (frontend, api, worker, Postgres, Redis). The app is deliberately simple; the platform around it is the project.
 
+Portfolio write-up: [islem-rb.github.io/projects/gitops-eks-platform](https://islem-rb.github.io/projects/gitops-eks-platform)
+
+## Architecture
+
+```mermaid
+flowchart LR
+  dev([git push]) --> gha
+
+  subgraph gha [GitHub Actions]
+    direction TB
+    test[ruff + pytest] --> build[build api / worker / frontend]
+    build --> scan[Trivy scan + CycloneDX SBOM]
+    scan --> push[push to ECR via OIDC]
+    push --> sign[cosign keyless sign]
+    sign --> bump[bump tag in gitops/]
+  end
+
+  push --> ecr[(Amazon ECR)]
+  bump --> repo[(gitops/ in this repo)]
+  repo --> argocd
+
+  subgraph eks [Amazon EKS, built with Terraform: vpc, eks, iam, ecr, workload-identity]
+    direction TB
+    argocd[Argo CD] --> rollouts[Argo Rollouts canary 20% / 60% / 100%]
+    rollouts --> app[frontend, api, worker, Postgres, Redis]
+    analysis[AnalysisTemplate: api 5xx ratio] -. abort .-> rollouts
+    prom[Prometheus + Alertmanager] --> analysis
+    app --> prom
+    app --> loki[Loki via Alloy]
+    kyverno[Kyverno CEL policies] -. admission .-> app
+    eso[External Secrets + Pod Identity] --> app
+    velero[Velero + pg_dump hooks] --> app
+  end
+
+  ecr --> app
+  sm[(AWS Secrets Manager)] --> eso
+  velero --> s3[(S3 backup bucket, shared stack)]
+  prom --> discord([Discord alerts])
+```
+
+The detailed diagram is in [docs/architecture/architecture.svg](docs/architecture/architecture.svg):
+
 ![Architecture](docs/architecture/architecture.svg)
+
+<!-- TODO screenshot: Argo CD application tree for demo-eks (docs/screenshots/argocd.png) -->
+<!-- TODO screenshot: Argo Rollouts canary aborted by the analysis (docs/screenshots/rollout-aborted.png) -->
+<!-- TODO screenshot: Grafana platform SLO dashboard (docs/screenshots/grafana-slo.png) -->
+
+## Tech stack
+
+| Area | Tools |
+|---|---|
+| Cloud | AWS: VPC, EKS (Pod Identity, EBS CSI, VPC CNI network policies), ECR, IAM, KMS, S3, Secrets Manager |
+| Infrastructure as code | Terraform (5 local modules, `terraform test` with mocked providers), TFLint, Checkov |
+| CI and supply chain | GitHub Actions with OIDC, Trivy, CycloneDX SBOM, cosign keyless signing, Dependabot |
+| Delivery | Argo CD, Argo Rollouts, Kustomize |
+| Observability | kube-prometheus-stack (Prometheus, Grafana, Alertmanager), Loki, Alloy, k6 |
+| Security and recovery | Kyverno (CEL policies), NetworkPolicies, External Secrets, Velero |
+| Workload | Python (FastAPI api, worker), nginx frontend, Postgres 16, Redis 7 |
 
 ## Measured results
 
@@ -84,6 +142,25 @@ docs/                RESULTS.md, architecture/, adr/, runbooks/
 
 ## Run it
 
+**The app alone, with Docker Compose.** Builds the api, worker and frontend and starts them with
+Postgres and Redis (from `docker-compose.yml`): frontend on http://localhost:8081, api on
+http://localhost:8000 (`/healthz`, `/jobs`), worker metrics on http://localhost:9100/metrics.
+
+```bash
+docker compose up --build
+```
+
+**The checks CI runs.**
+
+```bash
+pip install ruff pytest httpx -r app/api/requirements.txt -r app/worker/requirements.txt   # Python 3.12, as in CI
+ruff check app/
+pytest app/api/tests -q
+
+# Terraform module tests (mocked provider, no AWS access needed)
+for m in iam ecr vpc; do (cd infra/modules/$m && terraform init -backend=false && terraform test); done
+```
+
 **Locally on kind (free).** The Argo CD Applications for the kind variant are in `gitops/argocd/` (`demo-kind.yaml`, `monitoring.yaml`, `loki.yaml`, `kyverno.yaml` and the others).
 
 **On EKS (one budgeted session, about $0.50 per hour).**
@@ -115,6 +192,28 @@ The Velero backup bucket lives in the permanent `shared` stack, so backups survi
 ## Decisions
 
 [0001 record decisions](docs/adr/0001-record-architecture-decisions.md) · [0002 Postgres backups with pg_dump hooks](docs/adr/0002-postgres-backups-with-pg-dump-hooks.md) · [0003 image-signature policy, audit first](docs/adr/0003-image-signature-policy-audit-first.md) · [0004 DNS failure after a namespace restore on EKS (open)](docs/adr/0004-dns-failure-after-namespace-restore-on-eks.md)
+
+## What I learned
+
+- **A detector has to be tested on a healthy system first.** My first DNS check after a restore
+  raised false alarms, and an early restore drill reported data loss that never happened. Both
+  looked like platform bugs until I ran them where nothing was wrong.
+- **Measure, then write it down.** Every number in this README comes from a run recorded in
+  `docs/RESULTS.md`, and the cases that went wrong are kept there too.
+- **Keyless signing and OIDC remove a whole class of secrets**, but the trust policies and IAM
+  permissions have to be exact; most CI failures came from there, not from the build.
+- **kind and EKS differ in ways that matter**: storage provisioning (`hostPath` vs EBS CSI) and
+  the DNS failure after a restore only show up on one of them.
+
+## What I'd improve next
+
+Taken from the limits below:
+
+- Apply `staging` and `prod`, not just plan them.
+- Enforce image-signature verification on EKS once registry credentials come through Pod Identity.
+- Find the root cause of the DNS failure after a restore (ADR 0004) instead of restarting the CNI agent.
+- Add an ingress with DNS and TLS instead of `kubectl port-forward`.
+- Automate secret rotation, and replace the single Postgres pod with a replicated database.
 
 ## Limits and what is not done
 
