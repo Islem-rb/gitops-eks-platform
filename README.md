@@ -192,7 +192,7 @@ The Velero backup bucket lives in the permanent `shared` stack, so backups survi
 
 ## Incident investigator (in progress)
 
-`app/ops-agent` investigates alerts without changing anything: an alert starts a read-only collection through a fixed query catalog, deterministic rules diagnose it, and the report goes to Discord. It answers `unknown` when the evidence doesn't explain the problem. There is no LLM yet. Against real faults on kind, on-demand investigations reached the expected finding in 9 of 9 scenarios, while alert-triggered ones were weaker because of timing and dedup: [results and limits](docs/RESULTS.md#incident-investigator-rules-only-2026-11-04-single-node-kind-cluster), [scenarios](tests/scenarios/README.md).
+`app/ops-agent` investigates alerts without changing anything: an alert starts a read-only collection through a fixed query catalog, deterministic rules diagnose it, and the report goes to Discord. It answers `unknown` when the evidence doesn't explain the problem. There is no LLM yet. Against real faults on kind, on-demand investigations reached the expected finding in 9 of 9 scenarios, and after reliability fixes alert-triggered ones reached it in 5 of 5 (one run each, after a fix for the one miss in the first run): [results and limits](docs/RESULTS.md#incident-investigator-rules-only-2026-11-04-single-node-kind-cluster), [scenarios](tests/scenarios/README.md).
 
 ## Decisions
 

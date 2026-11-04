@@ -44,15 +44,28 @@ The full stack ran with real faults: Argo CD, Rollouts, Prometheus, Loki, Alloy 
 
 This is a small set, and the same author wrote the rules and the faults, so it shows the rules work on real signals. It is not a general accuracy figure.
 
-**Alert-triggered investigations during clean faults were weaker.** Alerts reached the agent, but of the 3 that ran, 1 was fully right:
+**Alert-triggered investigations, first version: 1 of 3 fully right.** Alerts reached the agent, but runs started too early or too late, and a 10-minute dedup suppressed the wrong-password incident entirely.
 
 | Fault | Alert | Report | Result |
 |---|---|---|---|
 | 50% failures on all pods | `ApiHighErrorRate` | `errors_unexplained` | correct |
 | NetworkPolicy block | `ApiDown` | `crashloop` | symptom, not the cause; the log evidence came later |
 | Redis scaled to 0 | `ApiHighErrorRate`, about 3.7 min in | `dependency_unreachable` | wrong: the test had just reverted the fault, so Redis was ready again |
+| Wrong database password | not investigated | no report | suppressed by the dedup |
 
-Wrong database password produced no alert-triggered report at all: the 10-minute dedup from the previous incident suppressed it (see the limits).
+**Alert-triggered investigations after the fixes: 5 of 5 reached the expected finding.** Faults ran one after another through Prometheus and Alertmanager. The agent now waits for evidence to settle, tracks each alert separately and suppresses only repeated notifications.
+
+| Fault | Alert | Report | Passes |
+|---|---|---|---|
+| Redis scaled to 0 | `ApiHighErrorRate` | `dependency_down` | 1 |
+| Wrong database password, under 4 min after the previous fault ended | `ApiHighLatencyP95`, then `ApiDown` | `db_auth_failure` (second report not re-sent) | 1, 1 |
+| `allow-postgres` NetworkPolicy deleted | `ApiDown` | `dependency_unreachable` | 1 |
+| 50% failures on all pods | `ApiHighErrorRate` | `errors_unexplained` | 3 |
+| Redis fixed as the alert arrived | `ApiHighErrorRate`, then `ApiErrorBudgetSlowBurn` | `recovered` (second report not re-sent) | 1, 1 |
+
+Read this result with care:
+- The first run of this set got 4 of 5: the late-alert case reported `dependency_unreachable` after Redis was fixed. The fix was written after seeing that failure, then all five faults were rerun, so the last row shows the fix works rather than how the agent handles an unseen fault.
+- It is one run of each fault, written by the same author as the rules.
 
 **Failures found by running it, each now fixed and tested:**
 - Real crashes were missing from the api's `http_requests_total`, so canary analysis and error alerts could miss them.
@@ -60,10 +73,13 @@ Wrong database password produced no alert-triggered report at all: the 10-minute
 - A fast-crashing pod sampled between restarts was reported as `unknown`.
 - A crashing worker outranked a 38.6% api error rate in the report.
 - The evaluation's own `crashloop` revert left the fault in place, because Argo CD does not remove a field absent from Git. This invalidated four recordings, which were redone.
+- Access logs of failed requests filled the 200-line log query in every recorded fault, crowding out the lines that name a cause. Known causes now have their own query.
+- A log line from before a fix still counted as recent, because the recent window was longer than the wait before the first look.
 
 **Limits:**
-- Dedup is per namespace and app for 10 minutes, so a different incident in that window gets no investigation. Discord still receives its alert.
-- An investigation sees the state when it runs, and alerts can arrive before useful logs or after a recovery.
+- `recovered` can be wrong during a live fault. It relies on no known failure being logged in the last 45 s, and Redis failures are logged rarely: 2 lines in 5 minutes at about 50% errors. A network fault that leaves the pods ready and logs this rarely could be reported as `recovered`. No scenario tests this yet. The report does ask the reader to confirm the error rate is falling.
+- An investigation sees the state when it runs. Error rates and p95 use 2-minute or longer windows, so they lag behind a fix: the `recovered` report above still showed a 32% error rate.
+- The 9 recorded fixtures predate the log query fix, so their log evidence still has the crowding described above.
 - Discord delivery is unit-tested only.
 - `dns-after-restore` and `errors-after-release` still use hand-written fixtures. The DNS case needs an EKS session.
 
