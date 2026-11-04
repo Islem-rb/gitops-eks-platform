@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ops-agent
+  namespace: ops-agent
+  labels: { app: ops-agent }
+spec:
+  replicas: 1
+  strategy: { type: Recreate } # the report volume is ReadWriteOnce
+  selector:
+    matchLabels: { app: ops-agent }
+  template:
+    metadata:
+      labels: { app: ops-agent }
+    spec:
+      serviceAccountName: ops-agent
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: ops-agent
+          image: platform/ops-agent:placeholder
+          ports: [{ name: http, containerPort: 8080 }]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 25m, memory: 96Mi }
+            limits: { memory: 256Mi }
+          volumeMounts:
+            - { name: reports, mountPath: /data }
+            - { name: webhook-token, mountPath: /etc/ops-agent/webhook, readOnly: true }
+            - { name: discord, mountPath: /etc/ops-agent/discord, readOnly: true }
+      volumes:
+        - name: reports
+          persistentVolumeClaim: { claimName: ops-agent-reports }
+        - name: webhook-token
+          secret: { secretName: ops-agent-webhook }
+        - name: discord
+          secret: { secretName: ops-agent-discord, optional: true }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ops-agent
+  namespace: ops-agent
+  labels: { app: ops-agent }
+spec:
+  selector: { app: ops-agent }
+  ports: [{ name: http, port: 8080, targetPort: http }]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ops-agent-reports
+  namespace: ops-agent
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: { storage: 256Mi }

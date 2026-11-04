@@ -16,7 +16,7 @@ spec:
         resources: ["pods"]
   matchConditions:
     - name: lab-and-demo-only
-      expression: object.metadata.namespace in ["kyverno-lab", "demo"]
+      expression: object.metadata.namespace in ["kyverno-lab", "demo", "ops-agent"]
   validations:
     - expression: |
         object.spec.containers.all(c,

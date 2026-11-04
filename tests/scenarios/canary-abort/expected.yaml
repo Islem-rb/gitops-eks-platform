@@ -1,0 +1,2 @@
+category: "canary_aborted"
+required_evidence: ["k8s.rollouts", "k8s.analysisruns"]

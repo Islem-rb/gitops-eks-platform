@@ -29,6 +29,8 @@ spec:
           identities:
             - issuer: "https://token.actions.githubusercontent.com"
               subject: "https://github.com/Islem-rb/gitops-eks-platform/.github/workflows/app.yml@refs/heads/main"
+            - issuer: "https://token.actions.githubusercontent.com"
+              subject: "https://github.com/Islem-rb/gitops-eks-platform/.github/workflows/ops-agent.yml@refs/heads/main"
         ctlog:
           url: "https://rekor.sigstore.dev"
   validations:

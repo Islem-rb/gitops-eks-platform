@@ -171,9 +171,10 @@ cd infra/envs/dev
 cp terraform.tfvars.example terraform.tfvars   # set public_access_cidrs to your IP/32
 terraform init && terraform apply
 
-# 2. create the two secrets once (values never go into Git)
+# 2. create the secrets once (values never go into Git)
 aws secretsmanager create-secret --name platform/app-db --secret-string '{"username":"app","password":"<generated>","database":"app"}'
 aws secretsmanager create-secret --name platform/discord-webhook --secret-string '<webhook-url>'
+aws secretsmanager create-secret --name platform/ops-agent-webhook-token --secret-string "$(openssl rand -hex 32)"   # Alertmanager will not start without it
 
 # 3. bootstrap Argo CD, Rollouts and all applications
 cd ../../.. && ./scripts/eks-bootstrap.sh

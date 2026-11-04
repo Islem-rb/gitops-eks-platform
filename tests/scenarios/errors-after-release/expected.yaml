@@ -1,0 +1,3 @@
+category: "errors_after_release"
+required_evidence: ["prom.error_rate", "changes.deploys"]
+forbidden: ["caused by"]

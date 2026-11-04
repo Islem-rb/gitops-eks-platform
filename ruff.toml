@@ -1,4 +1,5 @@
 line-length = 100
+src = ["app/ops-agent"]
 
 [lint]
 select = ["E", "F", "I"]
@@ -6,3 +7,5 @@ select = ["E", "F", "I"]
 [lint.per-file-ignores]
 # the test imports the app after adjusting sys.path
 "app/api/tests/*" = ["E402"]
+"app/ops-agent/tests/*" = ["E402"]
+"tests/eval/*" = ["E402"]
