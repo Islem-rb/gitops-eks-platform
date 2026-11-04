@@ -51,5 +51,6 @@ class Report(BaseModel):
     id: str
     created_at: str = Field(default_factory=utcnow)
     engine: str = "rules"
+    passes: int = 1
     findings: list[Finding]
     bundle: Bundle

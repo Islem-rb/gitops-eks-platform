@@ -87,6 +87,13 @@ def test_http_status_is_kept_so_missing_rbac_is_visible():
     assert item.error == "HTTP 403"
 
 
+NOW = 1_000 * 1_000_000_000
+
+
+def at(seconds_ago):
+    return NOW - seconds_ago * 1_000_000_000
+
+
 def test_log_signatures():
     lines = [
         ("api", "psycopg_pool.PoolTimeout: couldn't get a connection after 30.00 sec"),
@@ -95,7 +102,8 @@ def test_log_signatures():
         ("frontend", 'host not found in upstream "api"'),
         ("api", 'could not translate host name "postgres" to address'),
     ]
-    assert loki.summarize(lines)["signatures"] == {
+    summary = loki.summarize([(app, line, at(10)) for app, line in lines], NOW)
+    assert summary["signatures"] == {
         "db_unreachable": 1,
         "db_auth": 1,
         "redis_unreachable": 1,
@@ -103,8 +111,16 @@ def test_log_signatures():
     }
 
 
+def test_only_recent_lines_count_as_recent():
+    lines = [("api", "PoolTimeout", at(30)), ("api", "PoolTimeout", at(200))]
+    lines.append(("api", "redis.exceptions.ConnectionError", at(200)))
+    summary = loki.summarize(lines, NOW)
+    assert summary["signatures"] == {"db_unreachable": 2, "redis_unreachable": 1}
+    assert summary["recent_signatures"] == {"db_unreachable": 1}
+
+
 def test_log_samples_are_truncated_and_capped():
-    summary = loki.summarize([("api", "x" * 5000)] * 100)
+    summary = loki.summarize([("api", "x" * 5000, at(1))] * 100, NOW)
     assert summary["matched_lines"] == 100
     assert len(summary["samples"]) == 20
     assert all(len(s["line"]) == LOG_LINE_MAX_CHARS for s in summary["samples"])

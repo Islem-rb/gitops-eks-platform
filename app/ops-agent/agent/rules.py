@@ -24,8 +24,16 @@ def _scalar(bundle: Bundle, evidence_id: str) -> float | None:
     return series[0]["value"] if series else None
 
 
+def _serving_pods_unready(bundle: Bundle) -> bool:
+    return any(p.get("app") in SERVING_APPS and not p.get("ready") for p in _pods(bundle))
+
+
 def _signatures(bundle: Bundle) -> dict:
-    return bundle.data("loki.errors", {}).get("signatures", {})
+    """Log failures that describe now. Crash-looping pods log rarely, so unready pods count too."""
+    logs = bundle.data("loki.errors", {})
+    if "recent_signatures" not in logs or _serving_pods_unready(bundle):
+        return logs.get("signatures", {})
+    return logs["recent_signatures"]
 
 
 def _pods(bundle: Bundle) -> list[dict]:
@@ -141,6 +149,26 @@ def dependency_unreachable(bundle: Bundle) -> Finding | None:
         unknowns=["Whether a NetworkPolicy, the node network or connection pooling is the cause."],
         next_steps=["Check NetworkPolicies and recent changes under gitops/, then test the "
                     "connection from an api pod."],
+    )
+
+
+def recovered(bundle: Bundle) -> Finding | None:
+    """Failures were logged but have stopped and the pods are ready: an alert arrived late."""
+    logs = bundle.data("loki.errors", {})
+    if "recent_signatures" not in logs or _serving_pods_unready(bundle) or _deps_not_ready(bundle):
+        return None
+    older = sorted(set(logs.get("signatures", {})) - set(logs["recent_signatures"]))
+    if not older:
+        return None
+    return Finding(
+        category="recovered",
+        title="Failures in the logs have stopped",
+        explanation=f"Logged in the last few minutes but not recently: {', '.join(older)}. "
+        "The serving pods and dependencies are ready now.",
+        confidence="medium",
+        evidence_ids=["loki.errors", "k8s.pods", "k8s.deployments"],
+        unknowns=["What caused the failures and whether they will return."],
+        next_steps=["Confirm the error rate is falling, then review recent changes."],
     )
 
 
@@ -323,6 +351,7 @@ RULES: list[Callable[[Bundle], Finding | None]] = [
     db_auth_failure,
     dependency_down,
     dependency_unreachable,
+    recovered,
     image_pull_failure,
     crashloop_serving,
     pending_pods,

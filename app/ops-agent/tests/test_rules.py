@@ -129,3 +129,30 @@ def test_crashing_api_still_ranks_first():
     pods = ev("k8s.pods", [crash_pod(app="api")])
     errors = ev("prom.error_rate", [{"labels": {}, "value": 0.386}])
     assert evaluate(bundle(pods, CLEAN[1], errors, CLEAN[3]))[0].category == "crashloop"
+
+
+READY_DEPS = ev("k8s.deployments", [{"name": "redis", "desired": 1, "ready": 1}])
+
+
+def test_late_alert_after_recovery_is_not_called_a_live_fault():
+    # Seen on a real cluster: the alert arrived after Redis came back, and was reported as a
+    # connection problem with a ready Redis
+    logs = ev("loki.errors", {"signatures": {"redis_unreachable": 5}, "recent_signatures": {}})
+    ready = ev("k8s.pods", [{"name": "a", "app": "api", "ready": True}])
+    findings = evaluate(bundle(ready, CLEAN[1], CLEAN[2], logs, READY_DEPS, alerts=["ApiDown"]))
+    assert [f.category for f in findings] == ["recovered"]
+
+
+def test_recent_failures_are_still_a_live_fault():
+    signatures = {"redis_unreachable": 5}
+    logs = ev("loki.errors", {"signatures": signatures, "recent_signatures": signatures})
+    ready = ev("k8s.pods", [{"name": "a", "app": "api", "ready": True}])
+    finding = evaluate(bundle(ready, CLEAN[1], CLEAN[2], logs, READY_DEPS))[0]
+    assert finding.category == "dependency_unreachable"
+
+
+def test_crash_looping_pods_log_rarely_so_older_lines_still_count():
+    logs = ev("loki.errors", {"signatures": {"db_auth": 5}, "recent_signatures": {}})
+    pod = crash_pod(app="api", waiting_reason="CrashLoopBackOff")
+    finding = evaluate(bundle(ev("k8s.pods", [pod]), CLEAN[1], CLEAN[2], logs))[0]
+    assert finding.category == "db_auth_failure"
