@@ -179,8 +179,8 @@ aws secretsmanager create-secret --name platform/discord-webhook --secret-string
 cd ../../.. && ./scripts/eks-bootstrap.sh
 
 # 4. exercise it
-./scripts/release.sh v2 0          # good release: promoted
-./scripts/release.sh v3-bad 0.5    # bad release: aborted by analysis
+ARGO_APP=demo-eks ./scripts/release.sh v2 0          # good release: promoted
+ARGO_APP=demo-eks ./scripts/release.sh v3-bad 0.5    # bad release: aborted by analysis
 ARGO_APP=demo-eks ./scripts/restore-drill.sh
 
 # 5. tear everything down and verify nothing is left

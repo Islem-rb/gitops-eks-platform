@@ -18,9 +18,10 @@ spec:
               / sum(rate(http_requests_total{namespace="demo",app="api"}[1h])) > 14.4 * 0.01
             )
           for: 2m
-          labels: { severity: critical }
+          labels: { severity: critical, namespace: demo, app: api }
           annotations:
             summary: "API is burning its error budget 14x too fast"
+            runbook_url: "https://github.com/Islem-rb/gitops-eks-platform/blob/main/docs/runbooks/api-high-error-rate.md"
         - alert: ApiErrorBudgetSlowBurn
           expr: |
             (
@@ -31,6 +32,7 @@ spec:
               / sum(rate(http_requests_total{namespace="demo",app="api"}[6h])) > 6 * 0.01
             )
           for: 15m
-          labels: { severity: warning }
+          labels: { severity: warning, namespace: demo, app: api }
           annotations:
             summary: "API is burning its error budget 6x too fast"
+            runbook_url: "https://github.com/Islem-rb/gitops-eks-platform/blob/main/docs/runbooks/api-high-error-rate.md"

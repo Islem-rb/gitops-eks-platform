@@ -12,20 +12,21 @@ spec:
             sum(rate(http_requests_total{namespace="demo",app="api",status=~"5.."}[2m]))
             / sum(rate(http_requests_total{namespace="demo",app="api"}[2m])) > 0.05
           for: 1m
-          labels: { severity: critical }
+          labels: { severity: critical, namespace: demo, app: api }
           annotations:
             summary: "API 5xx error rate above 5%"
+            runbook_url: "https://github.com/Islem-rb/gitops-eks-platform/blob/main/docs/runbooks/api-high-error-rate.md"
             description: "More than 5% of API requests failed over the last 2 minutes."
         - alert: ApiHighLatencyP95
           expr: |
             histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="demo",app="api"}[5m]))) > 0.5
           for: 5m
-          labels: { severity: warning }
+          labels: { severity: warning, namespace: demo, app: api }
           annotations:
             summary: "API p95 latency above 500ms"
         - alert: ApiDown
           expr: absent(up{namespace="demo",app="api"} == 1)
           for: 1m
-          labels: { severity: critical }
+          labels: { severity: critical, namespace: demo, app: api }
           annotations:
             summary: "No API pod is being scraped successfully"

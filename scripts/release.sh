@@ -1,5 +1,6 @@
 #!/bin/bash
 # usage: scripts/release.sh <version> <fail_rate>   e.g. v7 0   or   v8-bad 0.5
+# ARGO_APP selects the Argo CD application to refresh (default demo-kind; use demo-eks on EKS).
 set -u
 VER=$1; FR=$2; F=gitops/apps/demo/base/api.yaml
 python3 - "$VER" "$FR" "$F" <<'PY'
@@ -14,9 +15,10 @@ PY
 git add $F && git commit --no-verify -q -m "release: api $VER (fail rate $FR)
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01R2XWrA5AL8ZtTDsnFt9MgB" && git push -q && echo "pushed $VER"
+Claude-Session: https://claude.ai/code/session_01R2XWrA5AL8ZtTDsnFt9MgB" && git push -q || { echo "ABORT: commit or push failed, nothing was released"; exit 1; }
+echo "pushed $VER"
 STABLE0=$(kubectl -n demo get rollout api -o jsonpath='{.status.stableRS}')
-kubectl -n argocd annotate app demo-kind argocd.argoproj.io/refresh=hard --overwrite >/dev/null
+kubectl -n argocd annotate app "${ARGO_APP:-demo-kind}" argocd.argoproj.io/refresh=hard --overwrite >/dev/null
 T0=$(date +%s)
 for i in $(seq 1 120); do
   PH=$(kubectl -n demo get rollout api -o jsonpath='{.status.phase}')

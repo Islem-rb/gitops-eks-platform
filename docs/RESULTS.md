@@ -1,6 +1,6 @@
 # Measured results
 
-All numbers come from a **single-node kind cluster on one VM** with synthetic traffic (`loadgen`, k6). They show that the mechanisms work and how fast; they are not production capacity figures.
+The first table comes from a **single-node kind cluster on one VM**; the two EKS sessions further down have their own tables. All runs use synthetic traffic (`loadgen`, k6). They show that the mechanisms work and how fast; they are not production capacity figures.
 
 | Test | Result | Date |
 |---|---|---|
