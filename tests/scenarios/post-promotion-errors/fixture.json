@@ -1,0 +1,588 @@
+{
+ "provenance": "recorded",
+ "bundle": {
+  "namespace": "demo",
+  "app": "api",
+  "trigger": "manual",
+  "alerts": [],
+  "collected_at": "2026-11-04T17:13:04.002565+00:00",
+  "evidence": [
+   {
+    "id": "k8s.pods",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.871994+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "api-5586d5f9b8-4zpcn",
+      "app": "api",
+      "revision": "5586d5f9b8",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-5586d5f9b8-7r8kl",
+      "app": "api",
+      "revision": "5586d5f9b8",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-5586d5f9b8-9bsk2",
+      "app": "api",
+      "revision": "5586d5f9b8",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-5586d5f9b8-9vnrs",
+      "app": "api",
+      "revision": "5586d5f9b8",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-5586d5f9b8-d6cr2",
+      "app": "api",
+      "revision": "5586d5f9b8",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "frontend-84994d7d87-ghp8l",
+      "app": "frontend",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "frontend-84994d7d87-rprgz",
+      "app": "frontend",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "loadgen-5c5fd5d5fd-dclkh",
+      "app": "loadgen",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "postgres-666966d779-t9gsr",
+      "app": "postgres",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "redis-75886798d5-4zb8w",
+      "app": "redis",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "worker-856bc8c74c-2crgg",
+      "app": "worker",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     }
+    ]
+   },
+   {
+    "id": "k8s.events",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.879891+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-w9kll",
+      "message": "Readiness probe failed: Get \"http://10.244.0.74:8000/readyz\": dial tcp 10.244.0.74:8000: connect: connection refused",
+      "count": 1,
+      "last_seen": "2026-11-04T16:36:20Z"
+     },
+     {
+      "reason": "MetricFailed",
+      "object": "AnalysisRun/api-5586d5f9b8-8",
+      "message": "Metric 'error-rate' Completed. Result: Failed",
+      "count": 1,
+      "last_seen": "2026-11-04T16:21:46Z"
+     },
+     {
+      "reason": "AnalysisRunFailed",
+      "object": "AnalysisRun/api-5586d5f9b8-8",
+      "message": "Analysis Completed. Result: Failed",
+      "count": 1,
+      "last_seen": "2026-11-04T16:21:46Z"
+     },
+     {
+      "reason": "AnalysisRunFailed",
+      "object": "Rollout/api",
+      "message": "Background Analysis Run 'api-5586d5f9b8-8' Status New: 'Failed' Previous: 'Running'",
+      "count": 1,
+      "last_seen": "2026-11-04T16:21:46Z"
+     },
+     {
+      "reason": "RolloutAborted",
+      "object": "Rollout/api",
+      "message": "Rollout aborted update to revision 8: Background analysis phase error/failed: Metric \"error-rate\" assessed Failed due to failed (2) > failureLimit (1)",
+      "count": 1,
+      "last_seen": "2026-11-04T16:21:46Z"
+     },
+     {
+      "reason": "FailedScheduling",
+      "object": "Pod/worker-bc58fdbdd-r59v9",
+      "message": "0/1 nodes are available: 1 Insufficient cpu. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.",
+      "count": 1,
+      "last_seen": "2026-11-04T16:12:00Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/worker-f9c8f7fc-ggzvz",
+      "message": "Back-off restarting failed container worker in pod worker-f9c8f7fc-ggzvz_demo(83fdde7a-3546-46b2-9a58-4e200fe545c2)",
+      "count": 90,
+      "last_seen": "2026-11-04T16:03:47Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-n5wbp",
+      "message": "Readiness probe failed: Get \"http://10.244.0.68:8000/readyz\": dial tcp 10.244.0.68:8000: connect: connection refused",
+      "count": 1,
+      "last_seen": "2026-11-04T15:49:26Z"
+     }
+    ]
+   },
+   {
+    "id": "k8s.deployments",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.890765+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "frontend",
+      "desired": 2,
+      "ready": 2
+     },
+     {
+      "name": "loadgen",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "postgres",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "redis",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "worker",
+      "desired": 1,
+      "ready": 1
+     }
+    ]
+   },
+   {
+    "id": "k8s.rollouts",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.894205+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "api",
+      "phase": "Healthy",
+      "aborted": false,
+      "stable_revision": "5586d5f9b8",
+      "current_revision": "5586d5f9b8",
+      "message": ""
+     }
+    ]
+   },
+   {
+    "id": "k8s.analysisruns",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.896927+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "api-5586d5f9b8-12",
+      "created_at": "2026-11-04T16:36:07Z",
+      "revision": "5586d5f9b8",
+      "phase": "Successful",
+      "metrics": []
+     },
+     {
+      "name": "api-5586d5f9b8-10",
+      "created_at": "2026-11-04T16:29:53Z",
+      "revision": "5586d5f9b8",
+      "phase": "Successful",
+      "metrics": [
+       {
+        "name": "error-rate",
+        "phase": "Successful",
+        "failed": 1,
+        "successful": 0,
+        "last_value": "[0.346060561321945]"
+       }
+      ]
+     },
+     {
+      "name": "api-5586d5f9b8-8",
+      "created_at": "2026-11-04T16:20:46Z",
+      "revision": "5586d5f9b8",
+      "phase": "Failed",
+      "metrics": [
+       {
+        "name": "error-rate",
+        "phase": "Failed",
+        "failed": 2,
+        "successful": 0,
+        "last_value": "[0.4864378434610037]"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "k8s.system_pods",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.899371+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "coredns-559f6c778d-rbrb9",
+      "app": "kube-dns",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "coredns-559f6c778d-wvk7p",
+      "app": "kube-dns",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     }
+    ]
+   },
+   {
+    "id": "k8s.nodes",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T17:12:52.901782+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "ops-eval-control-plane",
+      "ready": true,
+      "pressure": []
+     }
+    ]
+   },
+   {
+    "id": "prom.error_rate",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:52.904377+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 0.3582550037649846
+     }
+    ]
+   },
+   {
+    "id": "prom.errors_by_revision",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:53.208118+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {
+       "rollouts_pod_template_hash": "5586d5f9b8"
+      },
+      "value": 1.7993357083333332
+     }
+    ]
+   },
+   {
+    "id": "prom.requests_by_revision",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:53.209998+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {
+       "rollouts_pod_template_hash": "5586d5f9b8"
+      },
+      "value": 5.0226814583333335
+     }
+    ]
+   },
+   {
+    "id": "prom.latency_p95",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:53.211930+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 0.00475
+     }
+    ]
+   },
+   {
+    "id": "prom.api_targets_up",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:53.215867+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 5.0
+     }
+    ]
+   },
+   {
+    "id": "prom.worker_error_rate",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T17:12:53.218092+00:00",
+    "ok": true,
+    "error": null,
+    "data": []
+   },
+   {
+    "id": "loki.errors",
+    "source": "loki",
+    "collected_at": "2026-11-04T17:12:53.220178+00:00",
+    "ok": true,
+    "error": null,
+    "data": {
+     "matched_lines": 200,
+     "by_app": {
+      "api": 200
+     },
+     "signatures": {},
+     "samples": [
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:33126 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:32948 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:32934 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:32876 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:51536 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:51502 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:51492 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:51428 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:51042 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:50884 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59678 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59580 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59490 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59450 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59420 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59378 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59144 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59972 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59970 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      },
+      {
+       "app": "api",
+       "line": "INFO:     10.244.0.16:59758 - \"GET /version HTTP/1.1\" 500 Internal Server Error\n"
+      }
+     ]
+    }
+   },
+   {
+    "id": "changes.deploys",
+    "source": "argocd",
+    "collected_at": "2026-11-04T17:12:53.460941+00:00",
+    "ok": true,
+    "error": null,
+    "data": {
+     "application": "demo-kind",
+     "sync_status": "OutOfSync",
+     "health": "Healthy",
+     "deploys": [
+      {
+       "revision": "429c98fd21afee0b4c224a4d5ba84ebda9a4d460",
+       "deployed_at": "2026-11-04T13:59:19Z",
+       "age_seconds": 11614
+      }
+     ]
+    }
+   },
+   {
+    "id": "changes.commits",
+    "source": "github",
+    "collected_at": "2026-11-04T17:12:53.466389+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "sha": "fcbd4b97bf0e",
+      "date": "2026-10-25T15:30:04Z",
+      "subject": "Revert \"release: api v2.1-bad (fail rate 0.5)\""
+     },
+     {
+      "sha": "c9f083fe867a",
+      "date": "2026-10-25T15:24:59Z",
+      "subject": "release: api v2.1-bad (fail rate 0.5)"
+     },
+     {
+      "sha": "b4f09fcbc932",
+      "date": "2026-10-25T13:50:25Z",
+      "subject": "chore(gitops): deploy 7fed09464856 to eks overlay"
+     },
+     {
+      "sha": "cb9c69fbd7a4",
+      "date": "2026-10-25T13:41:34Z",
+      "subject": "chore(gitops): deploy 82c3a2f3019a to eks overlay"
+     },
+     {
+      "sha": "2e34f237ad80",
+      "date": "2026-10-24T20:10:45Z",
+      "subject": "Revert \"release: api v-rehearsal-bad (fail rate 0.5)\""
+     }
+    ]
+   }
+  ]
+ }
+}

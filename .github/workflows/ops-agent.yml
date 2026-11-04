@@ -1,0 +1,163 @@
+name: ops-agent
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/ops-agent/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
+  pull_request:
+    paths: ["app/ops-agent/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          pip install ruff pytest pyyaml
+          pip install -r app/ops-agent/requirements.txt
+      - name: Lint
+        run: ruff check app/ops-agent tests/eval
+      - name: Test
+        run: pytest app/ops-agent/tests -q
+      - name: Replay evaluation fixtures (no cluster, no LLM)
+        run: python tests/eval/run.py
+
+  build:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write # needed for OIDC to AWS and for keyless cosign signing
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [ops-agent]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Set image tag
+        run: echo "TAG=${GITHUB_SHA::12}" >> "$GITHUB_ENV"
+
+      - name: Build image (local, not pushed yet)
+        uses: docker/build-push-action@v6
+        with:
+          context: app/${{ matrix.service }}
+          load: true
+          tags: local/${{ matrix.service }}:${{ env.TAG }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Trivy vulnerability scan (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: local/${{ matrix.service }}:${{ env.TAG }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: local/${{ matrix.service }}:${{ env.TAG }}
+          format: cyclonedx
+          output: sbom-${{ matrix.service }}.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.cdx.json
+
+      # ---- everything below runs only on main, never on pull requests ----
+      - name: Configure AWS credentials (OIDC)
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        if: github.event_name == 'push'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image (skip if this tag already exists)
+        if: github.event_name == 'push'
+        run: |
+          REPO="platform/${{ matrix.service }}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/${REPO}:${TAG}"
+          if aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already in ECR (immutable), skipping push"
+          else
+            docker tag "local/${{ matrix.service }}:${TAG}" "$IMAGE"
+            docker push "$IMAGE"
+          fi
+          DIGEST=$(aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" \
+            --query 'imageDetails[0].imageDigest' --output text)
+          echo "IMAGE_DIGEST_REF=${{ steps.ecr.outputs.registry }}/${REPO}@${DIGEST}" >> "$GITHUB_ENV"
+
+      - uses: sigstore/cosign-installer@v3
+        if: github.event_name == 'push'
+
+      - name: Sign image (keyless, by digest)
+        if: github.event_name == 'push'
+        run: |
+          if cosign verify \
+              --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/ops-agent.yml@refs/heads/main" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              "$IMAGE_DIGEST_REF" >/dev/null 2>&1; then
+            echo "Digest already signed, skipping"
+          else
+            cosign sign --yes "$IMAGE_DIGEST_REF"
+          fi
+
+  # After every image is built, pushed and signed, record the new tag in Git so Argo CD deploys it.
+  bump-gitops:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: gitops-bump
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update the image tag in the EKS overlay
+        run: |
+          TAG="${GITHUB_SHA::12}"
+          python3 - "$TAG" <<'PY'
+          import re, sys
+          tag = sys.argv[1]
+          p = "gitops/apps/ops-agent/overlays/eks/kustomization.yaml"
+          s = open(p).read()
+          s, n = re.subn(r'(newTag:\s*)"?[^"\s]+"?', r'\g<1>"' + tag + '"', s)
+          assert n == 1, f"expected 1 newTag line, found {n}"
+          open(p, "w").write(s)
+          PY
+
+      - name: Commit and push
+        run: |
+          TAG="${GITHUB_SHA::12}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then echo "Overlay already at $TAG, nothing to do"; exit 0; fi
+          git add gitops/apps/ops-agent/overlays/eks/kustomization.yaml
+          git commit -m "chore(gitops): deploy ops-agent ${TAG} to eks overlay"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1

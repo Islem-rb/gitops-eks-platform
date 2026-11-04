@@ -21,7 +21,7 @@ kubectl -n argo-rollouts rollout status deploy/argo-rollouts --timeout=300s
 
 for f in gitops/argocd/eks/external-secrets.yaml gitops/argocd/eks/platform-eks.yaml gitops/argocd/eks/velero.yaml \
          gitops/argocd/monitoring.yaml gitops/argocd/monitoring-config.yaml gitops/argocd/loki.yaml gitops/argocd/alloy.yaml \
-         gitops/argocd/demo-eks.yaml; do
+         gitops/argocd/demo-eks.yaml gitops/argocd/eks/ops-agent.yaml; do
   kubectl apply -f "$f"
 done
 echo; echo "Argo CD admin password:"

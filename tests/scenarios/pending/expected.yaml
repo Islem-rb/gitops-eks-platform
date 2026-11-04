@@ -1,0 +1,2 @@
+category: "pod_pending"
+required_evidence: ["k8s.pods", "k8s.events"]

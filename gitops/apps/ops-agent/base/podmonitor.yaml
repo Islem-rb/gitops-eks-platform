@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ops-agent
+  namespace: ops-agent
+spec:
+  selector:
+    matchLabels: { app: ops-agent }
+  namespaceSelector:
+    matchNames: [ops-agent]
+  podTargetLabels: [app]
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

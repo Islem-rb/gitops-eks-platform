@@ -1,0 +1,2 @@
+category: "crashloop"
+required_evidence: ["k8s.pods"]

@@ -38,7 +38,7 @@ module "ecr" {
   source = "../../modules/ecr"
 
   name_prefix  = "platform"
-  repositories = ["api", "worker", "frontend"]
+  repositories = ["api", "worker", "frontend", "ops-agent"]
 }
 
 module "iam" {

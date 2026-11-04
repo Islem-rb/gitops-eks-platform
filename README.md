@@ -171,16 +171,17 @@ cd infra/envs/dev
 cp terraform.tfvars.example terraform.tfvars   # set public_access_cidrs to your IP/32
 terraform init && terraform apply
 
-# 2. create the two secrets once (values never go into Git)
+# 2. create the secrets once (values never go into Git)
 aws secretsmanager create-secret --name platform/app-db --secret-string '{"username":"app","password":"<generated>","database":"app"}'
 aws secretsmanager create-secret --name platform/discord-webhook --secret-string '<webhook-url>'
+aws secretsmanager create-secret --name platform/ops-agent-webhook-token --secret-string "$(openssl rand -hex 32)"   # Alertmanager will not start without it
 
 # 3. bootstrap Argo CD, Rollouts and all applications
 cd ../../.. && ./scripts/eks-bootstrap.sh
 
 # 4. exercise it
-./scripts/release.sh v2 0          # good release: promoted
-./scripts/release.sh v3-bad 0.5    # bad release: aborted by analysis
+ARGO_APP=demo-eks ./scripts/release.sh v2 0          # good release: promoted
+ARGO_APP=demo-eks ./scripts/release.sh v3-bad 0.5    # bad release: aborted by analysis
 ARGO_APP=demo-eks ./scripts/restore-drill.sh
 
 # 5. tear everything down and verify nothing is left
@@ -188,6 +189,10 @@ ARGO_APP=demo-eks ./scripts/restore-drill.sh
 ```
 
 The Velero backup bucket lives in the permanent `shared` stack, so backups survive cluster teardown.
+
+## Incident investigator (in progress)
+
+`app/ops-agent` investigates alerts without changing anything: an alert starts a read-only collection through a fixed query catalog, deterministic rules diagnose it, and the report goes to Discord. It answers `unknown` when the evidence doesn't explain the problem. There is no LLM yet. Against real faults on kind, on-demand investigations reached the expected finding in 9 of 9 scenarios, while alert-triggered ones were weaker because of timing and dedup: [results and limits](docs/RESULTS.md#incident-investigator-rules-only-2026-11-04-single-node-kind-cluster), [scenarios](tests/scenarios/README.md).
 
 ## Decisions
 
@@ -225,4 +230,5 @@ Stated plainly, because they matter:
 - **No ingress, DNS or TLS.** The UIs are reached with `kubectl port-forward`.
 - **A DNS failure after a restore on EKS** reproduced on a second session; it is mitigated by a restart but its root cause is not known.
 - **Secret rotation is not automated.**
+- **The incident investigator has only run on kind** and has not been deployed to EKS.
 - **Cost figures are estimates** from hourly prices, not billing data.

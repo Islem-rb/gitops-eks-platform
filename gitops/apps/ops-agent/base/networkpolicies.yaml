@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: ops-agent
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# Alertmanager sends the webhook and Prometheus scrapes the metrics, both from monitoring
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring
+  namespace: ops-agent
+spec:
+  podSelector:
+    matchLabels: { app: ops-agent }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: monitoring }
+      ports: [{ port: 8080 }]

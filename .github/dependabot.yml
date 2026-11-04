@@ -9,6 +9,12 @@ updates:
   - package-ecosystem: pip
     directory: "/app/worker"
     schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: "/app/ops-agent"
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: "/app/ops-agent"
+    schedule: { interval: weekly }
   - package-ecosystem: docker
     directory: "/app/api"
     schedule: { interval: weekly }

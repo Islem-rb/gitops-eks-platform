@@ -1,0 +1,4 @@
+category: "dns_failure"
+required_evidence: ["loki.errors", "k8s.system_pods"]
+must_mention: ["root cause is not established"]
+forbidden: ["caused by", "root cause is the"]

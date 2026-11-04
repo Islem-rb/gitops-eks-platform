@@ -28,3 +28,11 @@ def test_metrics_exposed():
     r = client.get("/metrics")
     assert r.status_code == 200
     assert "http_requests_total" in r.text
+
+
+def test_unhandled_exception_is_counted_as_500():
+    # The database pool is not open here, so /jobs raises instead of returning a response
+    crashing = TestClient(app, raise_server_exceptions=False)
+    assert crashing.get("/jobs").status_code == 500
+    metrics = client.get("/metrics").text
+    assert 'http_requests_total{method="GET",path="/jobs",status="500"}' in metrics

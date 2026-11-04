@@ -44,15 +44,21 @@ app = FastAPI(title="platform-demo-api", lifespan=lifespan)
 @app.middleware("http")
 async def metrics_and_chaos(request: Request, call_next):
     start = time.perf_counter()
-    if request.url.path not in SKIP_FAILURE and random.random() < FAIL_RATE:
-        response = Response("injected failure", status_code=500)
-    else:
-        response = await call_next(request)
-    route = request.scope.get("route")
-    path = route.path if route else "unmatched"
-    LATENCY.labels(request.method, path).observe(time.perf_counter() - start)
-    REQUESTS.labels(request.method, path, str(response.status_code)).inc()
-    return response
+    # An unhandled exception escapes call_next and only becomes a 500 further out, so assume 500
+    # until a response exists. Otherwise real crashes never reach the error-rate metric.
+    status = 500
+    try:
+        if request.url.path not in SKIP_FAILURE and random.random() < FAIL_RATE:
+            response = Response("injected failure", status_code=500)
+        else:
+            response = await call_next(request)
+        status = response.status_code
+        return response
+    finally:
+        route = request.scope.get("route")
+        path = route.path if route else "unmatched"
+        LATENCY.labels(request.method, path).observe(time.perf_counter() - start)
+        REQUESTS.labels(request.method, path, str(status)).inc()
 
 
 class JobIn(BaseModel):

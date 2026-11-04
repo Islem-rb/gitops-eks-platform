@@ -1,0 +1,839 @@
+{
+ "provenance": "recorded",
+ "bundle": {
+  "namespace": "demo",
+  "app": "api",
+  "trigger": "manual",
+  "alerts": [],
+  "collected_at": "2026-11-04T14:43:58.189054+00:00",
+  "evidence": [
+   {
+    "id": "k8s.pods",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.538783+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "api-559b9bf65c-cc5zl",
+      "app": "api",
+      "revision": "559b9bf65c",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-559b9bf65c-jzfhd",
+      "app": "api",
+      "revision": "559b9bf65c",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-559b9bf65c-pftlp",
+      "app": "api",
+      "revision": "559b9bf65c",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-559b9bf65c-wvzk8",
+      "app": "api",
+      "revision": "559b9bf65c",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "api-559b9bf65c-zgd9j",
+      "app": "api",
+      "revision": "559b9bf65c",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "frontend-84994d7d87-ghp8l",
+      "app": "frontend",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "frontend-84994d7d87-rprgz",
+      "app": "frontend",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "loadgen-5c5fd5d5fd-dclkh",
+      "app": "loadgen",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "postgres-666966d779-t9gsr",
+      "app": "postgres",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "redis-75886798d5-4zb8w",
+      "app": "redis",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "worker-f9c8f7fc-ggzvz",
+      "app": "worker",
+      "revision": null,
+      "phase": "Running",
+      "ready": false,
+      "restarts": 5,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": "CrashLoopBackOff",
+      "last_termination_reason": "Error",
+      "last_exit_code": 1
+     }
+    ]
+   },
+   {
+    "id": "k8s.events",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.545712+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "reason": "BackOff",
+      "object": "Pod/worker-f9c8f7fc-ggzvz",
+      "message": "Back-off restarting failed container worker in pod worker-f9c8f7fc-ggzvz_demo(83fdde7a-3546-46b2-9a58-4e200fe545c2)",
+      "count": 10,
+      "last_seen": "2026-11-04T14:43:14Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-89qqz",
+      "message": "Readiness probe failed: Get \"http://10.244.0.54:8000/readyz\": dial tcp 10.244.0.54:8000: connect: connection refused",
+      "count": 20,
+      "last_seen": "2026-11-04T14:32:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-d2p8g",
+      "message": "Readiness probe failed: Get \"http://10.244.0.56:8000/readyz\": dial tcp 10.244.0.56:8000: connect: connection refused",
+      "count": 20,
+      "last_seen": "2026-11-04T14:32:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-n6vm8",
+      "message": "Readiness probe failed: Get \"http://10.244.0.55:8000/readyz\": dial tcp 10.244.0.55:8000: connect: connection refused",
+      "count": 20,
+      "last_seen": "2026-11-04T14:32:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-nq66n",
+      "message": "Readiness probe failed: Get \"http://10.244.0.53:8000/readyz\": dial tcp 10.244.0.53:8000: connect: connection refused",
+      "count": 20,
+      "last_seen": "2026-11-04T14:32:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-wt578",
+      "message": "Readiness probe failed: Get \"http://10.244.0.52:8000/readyz\": dial tcp 10.244.0.52:8000: connect: connection refused",
+      "count": 20,
+      "last_seen": "2026-11-04T14:32:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-89qqz",
+      "message": "Liveness probe failed: Get \"http://10.244.0.54:8000/healthz\": dial tcp 10.244.0.54:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:32:34Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-d2p8g",
+      "message": "Liveness probe failed: Get \"http://10.244.0.56:8000/healthz\": dial tcp 10.244.0.56:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:32:34Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-n6vm8",
+      "message": "Liveness probe failed: Get \"http://10.244.0.55:8000/healthz\": dial tcp 10.244.0.55:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:32:34Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-nq66n",
+      "message": "Liveness probe failed: Get \"http://10.244.0.53:8000/healthz\": dial tcp 10.244.0.53:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:32:34Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-wt578",
+      "message": "Liveness probe failed: Get \"http://10.244.0.52:8000/healthz\": dial tcp 10.244.0.52:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:32:34Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-bd4nt",
+      "message": "Readiness probe failed: Get \"http://10.244.0.47:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1,
+      "last_seen": "2026-11-04T14:30:55Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-f4p8v",
+      "message": "Readiness probe failed: Get \"http://10.244.0.51:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1,
+      "last_seen": "2026-11-04T14:30:55Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-n596c",
+      "message": "Readiness probe failed: Get \"http://10.244.0.50:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1,
+      "last_seen": "2026-11-04T14:30:55Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-w28dh",
+      "message": "Readiness probe failed: Get \"http://10.244.0.48:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1,
+      "last_seen": "2026-11-04T14:30:55Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-h8jxk",
+      "message": "Readiness probe failed: Get \"http://10.244.0.49:8000/readyz\": dial tcp 10.244.0.49:8000: connect: connection refused",
+      "count": 1,
+      "last_seen": "2026-11-04T14:30:54Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-2tc6d",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-2tc6d_demo(c631fad7-7a22-4b7c-8039-d3d804b237a7)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:25:09Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-7rhgh",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-7rhgh_demo(cf227080-d931-422d-88c2-d19939066960)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:25:09Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-b8wsf",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-b8wsf_demo(1f9096ce-cf4f-412a-acb7-8a00daf9391d)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:25:09Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-d9cqd",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-d9cqd_demo(efdf87a0-ff8f-4969-8ee6-a05d5ba7a67a)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:25:09Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-dpgnb",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-dpgnb_demo(38f60db9-662a-4786-955e-45a55c47bae8)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:25:09Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-2tc6d",
+      "message": "Readiness probe failed: Get \"http://10.244.0.42:8000/readyz\": dial tcp 10.244.0.42:8000: connect: connection refused",
+      "count": 18,
+      "last_seen": "2026-11-04T14:25:03Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-7rhgh",
+      "message": "Readiness probe failed: Get \"http://10.244.0.46:8000/readyz\": dial tcp 10.244.0.46:8000: connect: connection refused",
+      "count": 18,
+      "last_seen": "2026-11-04T14:25:03Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-b8wsf",
+      "message": "Readiness probe failed: Get \"http://10.244.0.45:8000/readyz\": dial tcp 10.244.0.45:8000: connect: connection refused",
+      "count": 18,
+      "last_seen": "2026-11-04T14:25:03Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-d9cqd",
+      "message": "Readiness probe failed: Get \"http://10.244.0.44:8000/readyz\": dial tcp 10.244.0.44:8000: connect: connection refused",
+      "count": 18,
+      "last_seen": "2026-11-04T14:25:03Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-dpgnb",
+      "message": "Readiness probe failed: Get \"http://10.244.0.43:8000/readyz\": dial tcp 10.244.0.43:8000: connect: connection refused",
+      "count": 18,
+      "last_seen": "2026-11-04T14:25:03Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-2tc6d",
+      "message": "Liveness probe failed: Get \"http://10.244.0.42:8000/healthz\": dial tcp 10.244.0.42:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:24:59Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-7rhgh",
+      "message": "Liveness probe failed: Get \"http://10.244.0.46:8000/healthz\": dial tcp 10.244.0.46:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:24:59Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-b8wsf",
+      "message": "Liveness probe failed: Get \"http://10.244.0.45:8000/healthz\": dial tcp 10.244.0.45:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:24:59Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-d9cqd",
+      "message": "Liveness probe failed: Get \"http://10.244.0.44:8000/healthz\": dial tcp 10.244.0.44:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:24:59Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-dpgnb",
+      "message": "Liveness probe failed: Get \"http://10.244.0.43:8000/healthz\": dial tcp 10.244.0.43:8000: connect: connection refused",
+      "count": 5,
+      "last_seen": "2026-11-04T14:24:59Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/worker-856bc8c74c-rdfnr",
+      "message": "Back-off restarting failed container worker in pod worker-856bc8c74c-rdfnr_demo(7ac7d83a-efcf-45a8-bf63-4d4e30e5d53f)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:16:49Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-smdhf",
+      "message": "Readiness probe failed: Get \"http://10.244.0.22:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 9,
+      "last_seen": "2026-11-04T14:15:06Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-bjmgv",
+      "message": "Readiness probe failed: Get \"http://10.244.0.25:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 8,
+      "last_seen": "2026-11-04T14:15:01Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-j97bw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.21:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 8,
+      "last_seen": "2026-11-04T14:15:01Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-nc2wf",
+      "message": "Readiness probe failed: Get \"http://10.244.0.24:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 8,
+      "last_seen": "2026-11-04T14:15:01Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-kc7mv",
+      "message": "Readiness probe failed: Get \"http://10.244.0.23:8000/readyz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 6,
+      "last_seen": "2026-11-04T14:14:55Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/worker-856bc8c74c-rdfnr",
+      "message": "Liveness probe failed: Get \"http://10.244.0.17:9100/metrics\": dial tcp 10.244.0.17:9100: connect: connection refused",
+      "count": 1,
+      "last_seen": "2026-11-04T14:14:29Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-bjmgv",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-bjmgv_demo(f2d828f5-1704-4892-aedd-7f3dd475d1ba)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:00:49Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-j97bw",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-j97bw_demo(bda3d2de-d2f4-4892-90e2-e68831ec6cc8)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:00:49Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-kc7mv",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-kc7mv_demo(3c0c2ae6-0290-4121-b997-7c35a16e21bf)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:00:49Z"
+     },
+     {
+      "reason": "BackOff",
+      "object": "Pod/api-559b9bf65c-nc2wf",
+      "message": "Back-off restarting failed container api in pod api-559b9bf65c-nc2wf_demo(9af7c347-cf8d-4e70-96ff-f036a603b6de)",
+      "count": 2,
+      "last_seen": "2026-11-04T14:00:49Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-bjmgv",
+      "message": "Readiness probe failed: Get \"http://10.244.0.25:8000/readyz\": dial tcp 10.244.0.25:8000: connect: connection refused",
+      "count": 15,
+      "last_seen": "2026-11-04T14:00:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-j97bw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.21:8000/readyz\": dial tcp 10.244.0.21:8000: connect: connection refused",
+      "count": 15,
+      "last_seen": "2026-11-04T14:00:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-nc2wf",
+      "message": "Readiness probe failed: Get \"http://10.244.0.24:8000/readyz\": dial tcp 10.244.0.24:8000: connect: connection refused",
+      "count": 15,
+      "last_seen": "2026-11-04T14:00:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-smdhf",
+      "message": "Readiness probe failed: Get \"http://10.244.0.22:8000/readyz\": dial tcp 10.244.0.22:8000: connect: connection refused",
+      "count": 16,
+      "last_seen": "2026-11-04T14:00:39Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-kc7mv",
+      "message": "Readiness probe failed: Get \"http://10.244.0.23:8000/readyz\": dial tcp 10.244.0.23:8000: connect: connection refused",
+      "count": 17,
+      "last_seen": "2026-11-04T14:00:38Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/postgres-666966d779-t9gsr",
+      "message": "Readiness probe failed: /var/run/postgresql:5432 - no response\n",
+      "count": 2,
+      "last_seen": "2026-11-04T14:00:36Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-bjmgv",
+      "message": "Liveness probe failed: Get \"http://10.244.0.25:8000/healthz\": dial tcp 10.244.0.25:8000: connect: connection refused",
+      "count": 3,
+      "last_seen": "2026-11-04T14:00:19Z"
+     },
+     {
+      "reason": "Unhealthy",
+      "object": "Pod/api-559b9bf65c-j97bw",
+      "message": "Liveness probe failed: Get \"http://10.244.0.21:8000/healthz\": dial tcp 10.244.0.21:8000: connect: connection refused",
+      "count": 3,
+      "last_seen": "2026-11-04T14:00:19Z"
+     }
+    ]
+   },
+   {
+    "id": "k8s.deployments",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.549547+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "frontend",
+      "desired": 2,
+      "ready": 2
+     },
+     {
+      "name": "loadgen",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "postgres",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "redis",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "worker",
+      "desired": 1,
+      "ready": 0
+     }
+    ]
+   },
+   {
+    "id": "k8s.rollouts",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.552100+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "api",
+      "phase": "Healthy",
+      "aborted": false,
+      "stable_revision": "559b9bf65c",
+      "current_revision": "559b9bf65c",
+      "message": ""
+     }
+    ]
+   },
+   {
+    "id": "k8s.analysisruns",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.554310+00:00",
+    "ok": true,
+    "error": null,
+    "data": []
+   },
+   {
+    "id": "k8s.system_pods",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.556151+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "coredns-559f6c778d-rbrb9",
+      "app": "kube-dns",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     },
+     {
+      "name": "coredns-559f6c778d-wvk7p",
+      "app": "kube-dns",
+      "revision": null,
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "node": "ops-eval-control-plane",
+      "waiting_reason": null,
+      "last_termination_reason": null,
+      "last_exit_code": null
+     }
+    ]
+   },
+   {
+    "id": "k8s.nodes",
+    "source": "kubernetes",
+    "collected_at": "2026-11-04T14:43:57.558704+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "name": "ops-eval-control-plane",
+      "ready": true,
+      "pressure": []
+     }
+    ]
+   },
+   {
+    "id": "prom.error_rate",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.561020+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 0.0
+     }
+    ]
+   },
+   {
+    "id": "prom.errors_by_revision",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.565995+00:00",
+    "ok": true,
+    "error": null,
+    "data": []
+   },
+   {
+    "id": "prom.requests_by_revision",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.567514+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {
+       "rollouts_pod_template_hash": "559b9bf65c"
+      },
+      "value": 10.881818181818181
+     }
+    ]
+   },
+   {
+    "id": "prom.latency_p95",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.569861+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 0.0047545440051020415
+     }
+    ]
+   },
+   {
+    "id": "prom.api_targets_up",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.573693+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "labels": {},
+      "value": 5.0
+     }
+    ]
+   },
+   {
+    "id": "prom.worker_error_rate",
+    "source": "prometheus",
+    "collected_at": "2026-11-04T14:43:57.575233+00:00",
+    "ok": true,
+    "error": null,
+    "data": []
+   },
+   {
+    "id": "loki.errors",
+    "source": "loki",
+    "collected_at": "2026-11-04T14:43:57.576123+00:00",
+    "ok": true,
+    "error": null,
+    "data": {
+     "matched_lines": 200,
+     "by_app": {
+      "api": 142,
+      "frontend": 28,
+      "worker": 30
+     },
+     "signatures": {},
+     "samples": [
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      },
+      {
+       "app": "api",
+       "line": "failed to create fsnotify watcher: too many open files"
+      }
+     ]
+    }
+   },
+   {
+    "id": "changes.deploys",
+    "source": "argocd",
+    "collected_at": "2026-11-04T14:43:57.621282+00:00",
+    "ok": true,
+    "error": null,
+    "data": {
+     "application": "demo-kind",
+     "sync_status": "Synced",
+     "health": "Progressing",
+     "deploys": [
+      {
+       "revision": "429c98fd21afee0b4c224a4d5ba84ebda9a4d460",
+       "deployed_at": "2026-11-04T13:59:19Z",
+       "age_seconds": 2678
+      }
+     ]
+    }
+   },
+   {
+    "id": "changes.commits",
+    "source": "github",
+    "collected_at": "2026-11-04T14:43:57.624483+00:00",
+    "ok": true,
+    "error": null,
+    "data": [
+     {
+      "sha": "fcbd4b97bf0e",
+      "date": "2026-10-25T15:30:04Z",
+      "subject": "Revert \"release: api v2.1-bad (fail rate 0.5)\""
+     },
+     {
+      "sha": "c9f083fe867a",
+      "date": "2026-10-25T15:24:59Z",
+      "subject": "release: api v2.1-bad (fail rate 0.5)"
+     },
+     {
+      "sha": "b4f09fcbc932",
+      "date": "2026-10-25T13:50:25Z",
+      "subject": "chore(gitops): deploy 7fed09464856 to eks overlay"
+     },
+     {
+      "sha": "cb9c69fbd7a4",
+      "date": "2026-10-25T13:41:34Z",
+      "subject": "chore(gitops): deploy 82c3a2f3019a to eks overlay"
+     },
+     {
+      "sha": "2e34f237ad80",
+      "date": "2026-10-24T20:10:45Z",
+      "subject": "Revert \"release: api v-rehearsal-bad (fail rate 0.5)\""
+     }
+    ]
+   }
+  ]
+ }
+}

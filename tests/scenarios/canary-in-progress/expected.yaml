@@ -1,0 +1,2 @@
+category: "canary_errors"
+required_evidence: ["prom.errors_by_revision"]

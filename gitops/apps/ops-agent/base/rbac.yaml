@@ -1,0 +1,87 @@
+# Read-only. No Secrets, no ConfigMaps, no pods/log (logs come through Loki), no write verbs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ops-agent
+  namespace: ops-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ops-agent-read
+  namespace: demo
+rules:
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list]
+  - apiGroups: [argoproj.io]
+    resources: [rollouts, analysisruns]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ops-agent-read
+  namespace: demo
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ops-agent-read }
+subjects:
+  - { kind: ServiceAccount, name: ops-agent, namespace: ops-agent }
+---
+# The DNS failure in ADR 0004 involves aws-node and CoreDNS, which live here
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ops-agent-read-system-pods
+  namespace: kube-system
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ops-agent-read-system-pods
+  namespace: kube-system
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ops-agent-read-system-pods }
+subjects:
+  - { kind: ServiceAccount, name: ops-agent, namespace: ops-agent }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ops-agent-read-applications
+  namespace: argocd
+rules:
+  - apiGroups: [argoproj.io]
+    resources: [applications]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ops-agent-read-applications
+  namespace: argocd
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ops-agent-read-applications }
+subjects:
+  - { kind: ServiceAccount, name: ops-agent, namespace: ops-agent }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ops-agent-read-nodes
+rules:
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ops-agent-read-nodes
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: ops-agent-read-nodes }
+subjects:
+  - { kind: ServiceAccount, name: ops-agent, namespace: ops-agent }

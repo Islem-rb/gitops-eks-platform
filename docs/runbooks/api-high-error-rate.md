@@ -18,7 +18,7 @@
 ## 3. Roll back (GitOps way)
 
 git revert <bad-commit> && git push
-kubectl -n argocd annotate app demo-kind argocd.argoproj.io/refresh=hard --overwrite
+kubectl -n argocd annotate app demo-eks argocd.argoproj.io/refresh=hard --overwrite   # demo-kind on kind
 
 Do not `kubectl edit` live objects; ArgoCD self-heal will undo it.
 
