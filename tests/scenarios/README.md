@@ -26,6 +26,9 @@ rate windows fill), run `tests/eval/record.py <name>`, then `revert.sh`. Run `he
 
 ## Special cases
 
+- Check the cluster is clean before each scenario. A fault left behind changes every later result.
+- A revert must undo fields it added. Argo CD reports `Synced` and leaves a field that is absent from Git.
+
 - `canary-in-progress` has a short window: record before the analysis aborts the canary.
 - `errors-after-release` has no injector yet. It needs a real commit that deploys and then fails.
 - `dns-after-restore` only reproduces on EKS (ADR 0004), and `scripts/restore-drill.sh` applies its

@@ -25,6 +25,48 @@ bash scripts/restore-drill.sh         # aborts unless the backup is clean
 - Signature policy is Audit-only (see ADR 0003). Image-pull credentials for verification are a 12-hour ECR token on kind.
 - Backups on kind use an in-cluster S3 store; on EKS they must go to a real bucket.
 
+## Incident investigator, rules only (2026-11-04, single-node kind cluster)
+The full stack ran with real faults: Argo CD, Rollouts, Prometheus, Loki, Alloy and Alertmanager, with Discord replaced by a dummy URL. There is no LLM in these results.
+
+**On-demand investigations, taken while each fault was active: 9 of 9 reached the expected finding.** No rule was changed after this set was recorded except for the ordering fix below, and all 9 still pass after it.
+
+| Fault | Finding | Evidence at capture |
+|---|---|---|
+| None (healthy control) | `healthy` | error rate 0, logs flowing |
+| Redis scaled to 0 | `dependency_down` | error rate 39%, Redis 0 ready |
+| Wrong database password | `db_auth_failure` | 51 authentication failures in logs, api crash looping |
+| `allow-postgres` NetworkPolicy deleted | `dependency_unreachable` | 12 connection failures, Postgres ready |
+| Worker exits at startup | `crashloop` | restarts and exit code |
+| Worker requests 64 CPUs | `pod_pending` | `FailedScheduling` event |
+| 50% failures, canary aborted | `canary_aborted` | AnalysisRun `Failed` |
+| 50% failures, canary running | `canary_errors` | errors on the canary revision only |
+| 50% failures on all pods, analysis skipped | `errors_unexplained` | error rate 36%, reported as no known cause |
+
+This is a small set, and the same author wrote the rules and the faults, so it shows the rules work on real signals. It is not a general accuracy figure.
+
+**Alert-triggered investigations during clean faults were weaker.** Alerts reached the agent, but of the 3 that ran, 1 was fully right:
+
+| Fault | Alert | Report | Result |
+|---|---|---|---|
+| 50% failures on all pods | `ApiHighErrorRate` | `errors_unexplained` | correct |
+| NetworkPolicy block | `ApiDown` | `crashloop` | symptom, not the cause; the log evidence came later |
+| Redis scaled to 0 | `ApiHighErrorRate`, about 3.7 min in | `dependency_unreachable` | wrong: the test had just reverted the fault, so Redis was ready again |
+
+Wrong database password produced no alert-triggered report at all: the 10-minute dedup from the previous incident suppressed it (see the limits).
+
+**Failures found by running it, each now fixed and tested:**
+- Real crashes were missing from the api's `http_requests_total`, so canary analysis and error alerts could miss them.
+- The agent reported `healthy` while Loki was still starting and had no logs; no logs now means `unknown`.
+- A fast-crashing pod sampled between restarts was reported as `unknown`.
+- A crashing worker outranked a 38.6% api error rate in the report.
+- The evaluation's own `crashloop` revert left the fault in place, because Argo CD does not remove a field absent from Git. This invalidated four recordings, which were redone.
+
+**Limits:**
+- Dedup is per namespace and app for 10 minutes, so a different incident in that window gets no investigation. Discord still receives its alert.
+- An investigation sees the state when it runs, and alerts can arrive before useful logs or after a recovery.
+- Discord delivery is unit-tested only.
+- `dns-after-restore` and `errors-after-release` still use hand-written fixtures. The DNS case needs an EKS session.
+
 ## EKS session 1 (2026-10-24, eu-central-1, 2 x m7i-flex.large, Kubernetes 1.37)
 | Measurement | Result |
 |---|---|
