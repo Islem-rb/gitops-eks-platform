@@ -1,2 +1,3 @@
 category: "db_auth_failure"
 required_evidence: ["loki.errors"]
+llm: {"lead": ["password", "credential", "authentication"]}

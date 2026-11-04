@@ -47,10 +47,33 @@ class Finding(BaseModel):
     next_steps: list[str] = []
 
 
+class Hypothesis(BaseModel):
+    cause: str
+    confidence: Literal["low", "medium", "high"]
+    evidence_ids: list[str]
+
+
+class LLMAnalysis(BaseModel):
+    summary: str
+    hypotheses: list[Hypothesis]
+    unknowns: list[str]
+    next_steps: list[str]
+
+
+class LLMUsage(BaseModel):
+    model: str
+    input_tokens: int
+    output_tokens: int
+    estimated_usd: float
+
+
 class Report(BaseModel):
     id: str
     created_at: str = Field(default_factory=utcnow)
     engine: str = "rules"
     passes: int = 1
+    llm_status: str = "not_run"
+    analysis: LLMAnalysis | None = None
+    llm_usage: LLMUsage | None = None
     findings: list[Finding]
     bundle: Bundle

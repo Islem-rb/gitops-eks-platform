@@ -17,7 +17,7 @@ TOKEN=$(openssl rand -hex 32)
 kubectl create namespace ops-agent
 kubectl -n ops-agent  create secret generic ops-agent-webhook --from-literal=token="$TOKEN"
 kubectl -n monitoring create secret generic ops-agent-webhook --from-literal=token="$TOKEN"
-kind load docker-image platform/ops-agent:local   # after docker build -t platform/ops-agent:local app/ops-agent
+kind load docker-image platform/ops-agent:local   # after docker build -f app/ops-agent/Dockerfile -t platform/ops-agent:local .
 kubectl apply -f gitops/argocd/ops-agent-kind.yaml
 ```
 

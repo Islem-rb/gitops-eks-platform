@@ -3,9 +3,9 @@ name: ops-agent
 on:
   push:
     branches: [main]
-    paths: ["app/ops-agent/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
+    paths: ["app/ops-agent/**", "docs/runbooks/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
   pull_request:
-    paths: ["app/ops-agent/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
+    paths: ["app/ops-agent/**", "docs/runbooks/**", "tests/eval/**", "tests/scenarios/**", "ruff.toml", ".github/workflows/ops-agent.yml"]
 
 permissions:
   contents: read
@@ -53,7 +53,8 @@ jobs:
       - name: Build image (local, not pushed yet)
         uses: docker/build-push-action@v6
         with:
-          context: app/${{ matrix.service }}
+          context: .
+          file: app/ops-agent/Dockerfile
           load: true
           tags: local/${{ matrix.service }}:${{ env.TAG }}
           cache-from: type=gha,scope=${{ matrix.service }}

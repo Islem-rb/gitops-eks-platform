@@ -1,3 +1,4 @@
 category: "dependency_unreachable"
 required_evidence: ["loki.errors"]
 forbidden: ["caused by"]
+llm: {"lead": ["network", "reach", "connect"]}

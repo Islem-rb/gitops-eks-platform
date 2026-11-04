@@ -1,2 +1,3 @@
 category: "healthy"
 required_evidence: ["k8s.pods", "prom.error_rate"]
+llm: {"no_hypotheses": true}

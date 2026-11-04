@@ -1,3 +1,4 @@
 category: "dependency_down"
 required_evidence: ["k8s.deployments"]
 forbidden: ["reports ready"]
+llm: {"lead": ["redis"]}

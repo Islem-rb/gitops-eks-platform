@@ -1,0 +1,6 @@
+*
+!app/ops-agent/requirements.txt
+!app/ops-agent/main.py
+!app/ops-agent/agent
+!docs/runbooks
+**/__pycache__

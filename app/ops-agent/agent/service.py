@@ -63,8 +63,36 @@ class ReportStore:
         return Report.model_validate(json.loads(path.read_text())) if path.exists() else None
 
 
+def _render_analysis(report: Report, primary: Finding) -> str:
+    """The rules lead, because the model can contradict them. Its notes are cut first if long."""
+    analysis = report.analysis
+    footer = (
+        f"AI notes can be wrong; check the cited evidence. Report id: {report.id}. "
+        "No changes made."
+    )
+    lines = [
+        f"**{primary.title}** ({primary.category}, {primary.confidence} confidence)",
+        f"Trigger: {report.bundle.trigger}",
+        primary.explanation,
+        "**AI notes**",
+        analysis.summary,
+    ]
+    for hypothesis in analysis.hypotheses[:3]:
+        lines.append(
+            f"- ({hypothesis.confidence}) {hypothesis.cause} "
+            f"[{', '.join(hypothesis.evidence_ids)}]"
+        )
+    if analysis.unknowns:
+        lines.append("Unknown: " + " ".join(analysis.unknowns))
+    if analysis.next_steps:
+        lines.append("Next: " + " ".join(analysis.next_steps))
+    return "\n".join(lines)[: DISCORD_LIMIT - len(footer) - 1] + "\n" + footer
+
+
 def render(report: Report) -> str:
     primary: Finding = report.findings[0]
+    if report.analysis:
+        return _render_analysis(report, primary)
     lines = [
         f"**Investigation: {primary.title}**",
         f"Trigger: {report.bundle.trigger} | Category: {primary.category} | "
