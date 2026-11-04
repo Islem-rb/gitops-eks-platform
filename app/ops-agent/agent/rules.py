@@ -13,6 +13,7 @@ P95_THRESHOLD_SECONDS = 0.5  # same as the ApiHighLatencyP95 alert
 RECENT_DEPLOY_SECONDS = 1800  # the runbook's "release in the last 30 min"
 DEPENDENCIES = ("postgres", "redis")
 CRASH_RESTARTS = 2
+SERVING_APPS = ("api", "frontend")
 
 ROLLBACK = "Roll back through Git: git revert the commit, then let Argo CD sync."
 RUNBOOK = "Follow docs/runbooks/api-high-error-rate.md."
@@ -161,9 +162,9 @@ def image_pull_failure(bundle: Bundle) -> Finding | None:
     )
 
 
-def crashloop(bundle: Bundle) -> Finding | None:
+def _crashing(bundle: Bundle) -> list[dict]:
     # A container that crashes quickly is not always in the waiting state when it is sampled
-    pods = [
+    return [
         p
         for p in _pods(bundle)
         if p.get("waiting_reason") == "CrashLoopBackOff"
@@ -173,6 +174,9 @@ def crashloop(bundle: Bundle) -> Finding | None:
             and p.get("last_exit_code") not in (None, 0)
         )
     ]
+
+
+def _crashloop_finding(pods: list[dict]) -> Finding | None:
     if not pods:
         return None
     pod = pods[0]
@@ -187,6 +191,15 @@ def crashloop(bundle: Bundle) -> Finding | None:
         unknowns=["Why the process exits, unless the logs show it."],
         next_steps=[f"Read the previous container logs for {pod['name']}."],
     )
+
+
+def crashloop_serving(bundle: Bundle) -> Finding | None:
+    return _crashloop_finding([p for p in _crashing(bundle) if p.get("app") in SERVING_APPS])
+
+
+def crashloop_other(bundle: Bundle) -> Finding | None:
+    """Ranks last: a crashing background pod must not hide a problem users can see."""
+    return _crashloop_finding([p for p in _crashing(bundle) if p.get("app") not in SERVING_APPS])
 
 
 def pending_pods(bundle: Bundle) -> Finding | None:
@@ -311,13 +324,14 @@ RULES: list[Callable[[Bundle], Finding | None]] = [
     dependency_down,
     dependency_unreachable,
     image_pull_failure,
-    crashloop,
+    crashloop_serving,
     pending_pods,
     canary_aborted,
     canary_errors,
     errors_after_release,
     errors_unexplained,
     latency_high,
+    crashloop_other,
 ]
 
 
@@ -326,7 +340,7 @@ def evaluate(bundle: Bundle) -> list[Finding]:
     failed = [e.id for e in bundle.evidence if not e.ok]
 
     if not findings:
-        required = ("k8s.pods", "k8s.rollouts", "prom.error_rate")
+        required = ("k8s.pods", "k8s.rollouts", "prom.error_rate", "loki.errors")
         missing = [i for i in required if bundle.get(i) is None or not bundle.get(i).ok]
         if missing or bundle.alerts:
             reason = (

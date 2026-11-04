@@ -33,7 +33,8 @@ LOGQL_ERRORS = (
     '{namespace="demo",app=~"api|worker|frontend"}'
     ' |~ "(?i)(error|exception|timeout|traceback|failed|not found| 5[0-9][0-9] )"'
 )
-LOG_WINDOW_SECONDS = 600
+LOGQL_API_ANY = '{namespace="demo",app="api"}'
+LOG_WINDOW_SECONDS = 300
 LOG_LINE_LIMIT = 200
 LOG_SAMPLE_LIMIT = 20
 LOG_LINE_MAX_CHARS = 300

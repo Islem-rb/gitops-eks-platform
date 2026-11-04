@@ -9,6 +9,7 @@ from ..queries import (
     LOG_LINE_MAX_CHARS,
     LOG_SAMPLE_LIMIT,
     LOG_WINDOW_SECONDS,
+    LOGQL_API_ANY,
     LOGQL_ERRORS,
 )
 from . import safely
@@ -53,25 +54,34 @@ def summarize(lines: list[tuple[str, str]]) -> dict:
     }
 
 
-def fetch_errors(client: httpx.Client) -> dict:
+class NoLogsInWindow(Exception):
+    """The api logs every probe, so silence means the log pipeline is broken, not a healthy app."""
+
+
+def _query(client: httpx.Client, query: str, limit: int) -> list[tuple[str, str]]:
     now = time.time_ns()
     response = client.get(
         "/loki/api/v1/query_range",
         params={
-            "query": LOGQL_ERRORS,
+            "query": query,
             "start": now - LOG_WINDOW_SECONDS * 1_000_000_000,
             "end": now,
-            "limit": LOG_LINE_LIMIT,
+            "limit": limit,
             "direction": "backward",
         },
     )
     response.raise_for_status()
-    lines = [
+    return [
         (stream["stream"].get("app", "unknown"), value[1])
         for stream in response.json()["data"]["result"]
         for value in stream["values"]
     ]
-    return summarize(lines)
+
+
+def fetch_errors(client: httpx.Client) -> dict:
+    if not _query(client, LOGQL_API_ANY, 1):
+        raise NoLogsInWindow
+    return summarize(_query(client, LOGQL_ERRORS, LOG_LINE_LIMIT))
 
 
 def collect(client: httpx.Client) -> list[Evidence]:

@@ -108,3 +108,21 @@ def test_log_samples_are_truncated_and_capped():
     assert summary["matched_lines"] == 100
     assert len(summary["samples"]) == 20
     assert all(len(s["line"]) == LOG_LINE_MAX_CHARS for s in summary["samples"])
+
+
+def test_no_api_logs_at_all_means_the_pipeline_failed():
+    empty = {"data": {"result": []}}
+    logs = client(lambda r: httpx.Response(200, json=empty))
+    item = safely("loki.errors", "loki", lambda: loki.fetch_errors(logs))
+    assert item.ok is False
+    assert item.error == "NoLogsInWindow"
+
+
+def test_api_logs_with_no_errors_is_a_clean_result():
+    def handler(request):
+        if "|~" in request.url.params["query"]:
+            return httpx.Response(200, json={"data": {"result": []}})
+        stream = {"stream": {"app": "api"}, "values": [["1", "GET /healthz 200"]]}
+        return httpx.Response(200, json={"data": {"result": [stream]}})
+
+    assert loki.fetch_errors(client(handler))["matched_lines"] == 0
