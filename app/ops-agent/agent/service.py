@@ -13,25 +13,39 @@ from .rules import evaluate
 
 ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 DISCORD_LIMIT = 1900
+ALERT_MEMORY_SECONDS = 86400
+# A symptom can sharpen into a cause once logs arrive, so these are worth a second look
+INCONCLUSIVE = {"unknown", "errors_unexplained", "crashloop"}
 
 
-class Deduper:
-    """One incident fires several alerts, so only the first starts an investigation."""
+class IncidentTracker:
+    """Decides what is worth repeating. Alertmanager resends firing alerts, and one incident fires
+    several, so an investigation runs per new alert and a notice goes out per new finding."""
 
     def __init__(self, window_seconds: float, clock: Callable[[], float] = time.monotonic):
         self._window = window_seconds
         self._clock = clock
-        self._seen: dict[str, float] = {}
+        self._alerts: dict[tuple[str, str], float] = {}
+        self._findings: dict[str, float] = {}
         self._lock = threading.Lock()
 
-    def should_run(self, key: str) -> bool:
+    def is_new_alert(self, fingerprint: str, starts_at: str) -> bool:
+        key = (fingerprint, starts_at)
         with self._lock:
             now = self._clock()
-            last = self._seen.get(key)
-            if last is not None and now - last < self._window:
-                return False
-            self._seen[key] = now
-            return True
+            self._alerts = {
+                k: seen for k, seen in self._alerts.items() if now - seen < ALERT_MEMORY_SECONDS
+            }
+            is_new = key not in self._alerts
+            self._alerts[key] = now
+            return is_new
+
+    def should_notify(self, category: str) -> bool:
+        with self._lock:
+            now = self._clock()
+            last = self._findings.get(category)
+            self._findings[category] = now
+            return last is None or now - last >= self._window
 
 
 class ReportStore:
@@ -77,8 +91,27 @@ def notify(client: httpx.Client, webhook_url: str, report: Report) -> None:
     ).raise_for_status()
 
 
-def investigate(
-    collect: Callable[[], list[Evidence]], trigger: str, alerts: list[str]
-) -> Report:
+def investigate(collect: Callable[[], list[Evidence]], trigger: str, alerts: list[str]) -> Report:
     bundle = Bundle(trigger=trigger, alerts=alerts, evidence=collect())
     return Report(id=uuid.uuid4().hex, findings=evaluate(bundle), bundle=bundle)
+
+
+def investigate_alert(
+    collect: Callable[[], list[Evidence]],
+    trigger: str,
+    alerts: list[str],
+    settle_seconds: float,
+    recheck_seconds: float,
+    max_passes: int,
+    sleep: Callable[[float], None] = time.sleep,
+) -> Report:
+    """Let logs and metrics catch up with the alert, then recheck while it is inconclusive."""
+    sleep(settle_seconds)
+    report = investigate(collect, trigger, alerts)
+    passes = 1
+    while report.findings[0].category in INCONCLUSIVE and passes < max_passes:
+        sleep(recheck_seconds)
+        report = investigate(collect, trigger, alerts)
+        passes += 1
+    report.passes = passes
+    return report

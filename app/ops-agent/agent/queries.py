@@ -33,8 +33,28 @@ LOGQL_ERRORS = (
     '{namespace="demo",app=~"api|worker|frontend"}'
     ' |~ "(?i)(error|exception|timeout|traceback|failed|not found| 5[0-9][0-9] )"'
 )
+# Known causes, first match wins, so "could not translate host name" counts as DNS, not database.
+# Access logs of failed requests are far more common than these and would crowd them out of
+# LOGQL_ERRORS, so they get their own query.
+SIGNATURE_PATTERNS = {
+    "dns": (
+        r"could not translate host name|host not found in upstream"
+        r"|temporary failure in name resolution|name or service not known"
+    ),
+    "db_auth": r"password authentication failed",
+    "db_unreachable": r"PoolTimeout|OperationalError|connection .*5432|psycopg\.\w*error",
+    "redis_unreachable": r"redis\.exceptions|connecting to redis|:6379",
+}
+LOGQL_SIGNATURES = (
+    '{namespace="demo",app=~"api|worker|frontend"} |~ `(?i)('
+    + "|".join(SIGNATURE_PATTERNS.values())
+    + ")`"
+)
 LOGQL_API_ANY = '{namespace="demo",app="api"}'
 LOG_WINDOW_SECONDS = 300
+# Shorter than the wait before an alert's first look, so lines from before a fix aren't "recent"
+RECENT_LOG_SECONDS = 45
 LOG_LINE_LIMIT = 200
+SIGNATURE_LINE_LIMIT = 500
 LOG_SAMPLE_LIMIT = 20
 LOG_LINE_MAX_CHARS = 300
