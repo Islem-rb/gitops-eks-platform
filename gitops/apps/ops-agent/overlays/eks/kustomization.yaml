@@ -6,7 +6,7 @@ resources:
 images:
   - name: platform/ops-agent
     newName: 455939971919.dkr.ecr.eu-central-1.amazonaws.com/platform/ops-agent
-    newTag: "placeholder"
+    newTag: "6580aacfba51"
 patches:
   - target: { kind: Deployment, name: ops-agent }
     patch: |
