@@ -1,0 +1,2 @@
+category: "recovered"
+required_evidence: ["loki.errors", "prom.error_rate_recent"]

@@ -5,7 +5,7 @@ from agent.queries import (
     LOG_LINE_MAX_CHARS,
     LOGQL_SIGNATURES,
     PROMQL,
-    RECENT_LOG_SECONDS,
+    RECENT_SECONDS,
     SIGNATURE_PATTERNS,
 )
 
@@ -130,7 +130,7 @@ def test_only_recent_lines_count_as_recent():
 
 def test_lines_from_before_a_fix_are_not_recent_at_the_first_look():
     # Seen on a real cluster: 60 s after a fix, one stale line was reported as a live network fault
-    assert RECENT_LOG_SECONDS < ALERT_SETTLE_SECONDS
+    assert RECENT_SECONDS < ALERT_SETTLE_SECONDS
 
 
 def test_access_logs_cannot_crowd_out_the_cause():

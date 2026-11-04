@@ -60,4 +60,6 @@ scenario network-block 300
 scenario post-promotion-errors 300
 sleep 300   # the late-alert case needs its own alert to fire, so let the last one resolve
 late_alert
+sleep 300
+scenario fault-after-recovery 300
 echo DONE

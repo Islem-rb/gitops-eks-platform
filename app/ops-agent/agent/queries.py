@@ -5,6 +5,7 @@ control: namespace, time window and line limits are set here and never come from
 """
 
 NAMESPACE = "demo"
+RECENT_SECONDS = 45  # what counts as "now" for logs and the short error rate
 _API = 'namespace="demo",app="api"'
 _API_5XX = f'{_API},status=~"5.."'
 
@@ -12,6 +13,11 @@ PROMQL = {
     "error_rate": (
         f"(sum(rate(http_requests_total{{{_API_5XX}}}[2m])) or vector(0))"
         f" / sum(rate(http_requests_total{{{_API}}}[2m]))"
+    ),
+    # Same window as the recent log check. A 2-minute rate still shows a fault that was just fixed.
+    "error_rate_recent": (
+        f"(sum(rate(http_requests_total{{{_API_5XX}}}[{RECENT_SECONDS}s])) or vector(0))"
+        f" / sum(rate(http_requests_total{{{_API}}}[{RECENT_SECONDS}s]))"
     ),
     "errors_by_revision": (
         f"sum by (rollouts_pod_template_hash) (rate(http_requests_total{{{_API_5XX}}}[2m]))"
@@ -53,7 +59,6 @@ LOGQL_SIGNATURES = (
 LOGQL_API_ANY = '{namespace="demo",app="api"}'
 LOG_WINDOW_SECONDS = 300
 # Shorter than the wait before an alert's first look, so lines from before a fix aren't "recent"
-RECENT_LOG_SECONDS = 45
 LOG_LINE_LIMIT = 200
 SIGNATURE_LINE_LIMIT = 500
 LOG_SAMPLE_LIMIT = 20

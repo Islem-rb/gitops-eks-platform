@@ -28,12 +28,23 @@ def _serving_pods_unready(bundle: Bundle) -> bool:
     return any(p.get("app") in SERVING_APPS and not p.get("ready") for p in _pods(bundle))
 
 
+def _failing_now(bundle: Bundle) -> bool:
+    rate = _scalar(bundle, "prom.error_rate_recent")
+    return rate is not None and rate >= ERROR_RATE_THRESHOLD
+
+
 def _signatures(bundle: Bundle) -> dict:
     """Log failures that describe now. Crash-looping pods log rarely, so unready pods count too."""
     logs = bundle.data("loki.errors", {})
     if "recent_signatures" not in logs or _serving_pods_unready(bundle):
         return logs.get("signatures", {})
     return logs["recent_signatures"]
+
+
+def _older_signatures(bundle: Bundle) -> list[str]:
+    """Failures logged earlier in the window but not recently."""
+    logs = bundle.data("loki.errors", {})
+    return sorted(set(logs.get("signatures", {})) - set(logs.get("recent_signatures", {})))
 
 
 def _pods(bundle: Bundle) -> list[dict]:
@@ -155,19 +166,27 @@ def dependency_unreachable(bundle: Bundle) -> Finding | None:
 def recovered(bundle: Bundle) -> Finding | None:
     """Failures were logged but have stopped and the pods are ready: an alert arrived late."""
     logs = bundle.data("loki.errors", {})
-    if "recent_signatures" not in logs or _serving_pods_unready(bundle) or _deps_not_ready(bundle):
+    if (
+        "recent_signatures" not in logs
+        or _serving_pods_unready(bundle)
+        or _deps_not_ready(bundle)
+        or _failing_now(bundle)
+    ):
         return None
-    older = sorted(set(logs.get("signatures", {})) - set(logs["recent_signatures"]))
+    older = _older_signatures(bundle)
     if not older:
         return None
+    # No traffic or a failed query can't confirm that requests are succeeding again
+    confirmed = _scalar(bundle, "prom.error_rate_recent") is not None
     return Finding(
         category="recovered",
         title="Failures in the logs have stopped",
         explanation=f"Logged in the last few minutes but not recently: {', '.join(older)}. "
         "The serving pods and dependencies are ready now.",
-        confidence="medium",
-        evidence_ids=["loki.errors", "k8s.pods", "k8s.deployments"],
-        unknowns=["What caused the failures and whether they will return."],
+        confidence="medium" if confirmed else "low",
+        evidence_ids=["loki.errors", "prom.error_rate_recent", "k8s.pods", "k8s.deployments"],
+        unknowns=["What caused the failures and whether they will return."]
+        + ([] if confirmed else ["Whether requests are succeeding now: no recent error rate."]),
         next_steps=["Confirm the error rate is falling, then review recent changes."],
     )
 
@@ -318,13 +337,22 @@ def errors_after_release(bundle: Bundle) -> Finding | None:
 def errors_unexplained(bundle: Bundle) -> Finding | None:
     if not _errors_high(bundle):
         return None
+    # Old lines may belong to an earlier fault, so they are mentioned but not named as the cause
+    older = _older_signatures(bundle) if _failing_now(bundle) else []
+    note = f" Older log lines show {', '.join(older)}, but they may be unrelated." if older else ""
     return Finding(
         category="errors_unexplained",
         title="API errors with no cause in the evidence",
         explanation=f"The error rate is {_error_rate(bundle):.1%}. There is no recent deployment, "
-        "unready dependency or known log signature to explain it.",
+        f"unready dependency or recent log signature to explain it.{note}",
         confidence="low",
-        evidence_ids=["prom.error_rate", "k8s.pods", "changes.deploys", "loki.errors"],
+        evidence_ids=[
+            "prom.error_rate",
+            "prom.error_rate_recent",
+            "k8s.pods",
+            "changes.deploys",
+            "loki.errors",
+        ],
         unknowns=["The cause."],
         next_steps=[RUNBOOK],
     )
