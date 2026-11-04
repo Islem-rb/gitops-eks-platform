@@ -11,42 +11,32 @@ from ..queries import (
     LOG_WINDOW_SECONDS,
     LOGQL_API_ANY,
     LOGQL_ERRORS,
+    LOGQL_SIGNATURES,
     RECENT_LOG_SECONDS,
+    SIGNATURE_LINE_LIMIT,
+    SIGNATURE_PATTERNS,
 )
 from . import safely
 
 # Log lines are untrusted input. They are only matched against these patterns and stored truncated.
-# Each line gets its first match, so "could not translate host name" counts as DNS, not database.
-SIGNATURES = [
-    (
-        "dns",
-        re.compile(
-            r"could not translate host name|host not found in upstream"
-            r"|temporary failure in name resolution|name or service not known",
-            re.I,
-        ),
-    ),
-    ("db_auth", re.compile(r"password authentication failed", re.I)),
-    (
-        "db_unreachable",
-        re.compile(r"PoolTimeout|OperationalError|connection .*5432|psycopg\.\w*error", re.I),
-    ),
-    ("redis_unreachable", re.compile(r"redis\.exceptions|connecting to redis|:6379", re.I)),
-]
+SIGNATURES = [(name, re.compile(pattern, re.I)) for name, pattern in SIGNATURE_PATTERNS.items()]
 
 
 def _signature(line: str) -> str | None:
     return next((name for name, pattern in SIGNATURES if pattern.search(line)), None)
 
 
-def summarize(lines: list[tuple[str, str, int]], now_ns: int) -> dict:
-    """Lines are (app, text, timestamp in ns)."""
+def summarize(
+    lines: list[tuple[str, str, int]], cause_lines: list[tuple[str, str, int]], now_ns: int
+) -> dict:
+    """Lines are (app, text, timestamp in ns). cause_lines come from the signature query."""
     signatures: dict[str, int] = {}
     recent: dict[str, int] = {}
     by_app: dict[str, int] = {}
     recent_after = now_ns - RECENT_LOG_SECONDS * 1_000_000_000
-    for app, line, timestamp in lines:
+    for app, _, _ in lines:
         by_app[app] = by_app.get(app, 0) + 1
+    for _, line, timestamp in cause_lines:
         name = _signature(line)
         if name:
             signatures[name] = signatures.get(name, 0) + 1
@@ -57,9 +47,9 @@ def summarize(lines: list[tuple[str, str, int]], now_ns: int) -> dict:
         "by_app": by_app,
         "signatures": signatures,
         "recent_signatures": recent,
-        "samples": [
+        "samples": [  # the lines that name a cause say more than repeated access logs
             {"app": app, "line": line[:LOG_LINE_MAX_CHARS]}
-            for app, line, _ in lines[:LOG_SAMPLE_LIMIT]
+            for app, line, _ in (cause_lines + lines)[:LOG_SAMPLE_LIMIT]
         ],
     }
 
@@ -91,7 +81,11 @@ def _query(client: httpx.Client, query: str, limit: int) -> list[tuple[str, str,
 def fetch_errors(client: httpx.Client) -> dict:
     if not _query(client, LOGQL_API_ANY, 1):
         raise NoLogsInWindow
-    return summarize(_query(client, LOGQL_ERRORS, LOG_LINE_LIMIT), time.time_ns())
+    return summarize(
+        _query(client, LOGQL_ERRORS, LOG_LINE_LIMIT),
+        _query(client, LOGQL_SIGNATURES, SIGNATURE_LINE_LIMIT),
+        time.time_ns(),
+    )
 
 
 def collect(client: httpx.Client) -> list[Evidence]:

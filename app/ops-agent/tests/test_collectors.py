@@ -1,7 +1,13 @@
 import httpx
 
 from agent.collectors import kubernetes, loki, prometheus, safely
-from agent.queries import LOG_LINE_MAX_CHARS, PROMQL
+from agent.queries import (
+    LOG_LINE_MAX_CHARS,
+    LOGQL_SIGNATURES,
+    PROMQL,
+    RECENT_LOG_SECONDS,
+    SIGNATURE_PATTERNS,
+)
 
 
 def client(handler):
@@ -90,6 +96,9 @@ def test_http_status_is_kept_so_missing_rbac_is_visible():
 NOW = 1_000 * 1_000_000_000
 
 
+ALERT_SETTLE_SECONDS = 60  # the default in main.py
+
+
 def at(seconds_ago):
     return NOW - seconds_ago * 1_000_000_000
 
@@ -102,7 +111,7 @@ def test_log_signatures():
         ("frontend", 'host not found in upstream "api"'),
         ("api", 'could not translate host name "postgres" to address'),
     ]
-    summary = loki.summarize([(app, line, at(10)) for app, line in lines], NOW)
+    summary = loki.summarize([], [(app, line, at(10)) for app, line in lines], NOW)
     assert summary["signatures"] == {
         "db_unreachable": 1,
         "db_auth": 1,
@@ -114,13 +123,34 @@ def test_log_signatures():
 def test_only_recent_lines_count_as_recent():
     lines = [("api", "PoolTimeout", at(30)), ("api", "PoolTimeout", at(200))]
     lines.append(("api", "redis.exceptions.ConnectionError", at(200)))
-    summary = loki.summarize(lines, NOW)
+    summary = loki.summarize([], lines, NOW)
     assert summary["signatures"] == {"db_unreachable": 2, "redis_unreachable": 1}
     assert summary["recent_signatures"] == {"db_unreachable": 1}
 
 
+def test_lines_from_before_a_fix_are_not_recent_at_the_first_look():
+    # Seen on a real cluster: 60 s after a fix, one stale line was reported as a live network fault
+    assert RECENT_LOG_SECONDS < ALERT_SETTLE_SECONDS
+
+
+def test_access_logs_cannot_crowd_out_the_cause():
+    # Seen on a real cluster: 200 lines of 500s left one Redis line during a Redis outage
+    noise = [("api", f'"GET /jobs" 500 Internal Server Error {i}', at(1)) for i in range(200)]
+    causes = [("api", "redis.exceptions.ConnectionError", at(2))] * 50
+    summary = loki.summarize(noise, causes, NOW)
+    assert summary["signatures"] == {"redis_unreachable": 50}
+    assert summary["matched_lines"] == 200
+    assert all("redis" in sample["line"] for sample in summary["samples"])
+
+
+def test_signature_query_is_catalog_text_covering_every_pattern():
+    assert LOGQL_SIGNATURES.count("`") == 2  # a backtick in a pattern would end the LogQL string
+    for pattern in SIGNATURE_PATTERNS.values():
+        assert pattern in LOGQL_SIGNATURES
+
+
 def test_log_samples_are_truncated_and_capped():
-    summary = loki.summarize([("api", "x" * 5000, at(1))] * 100, NOW)
+    summary = loki.summarize([("api", "x" * 5000, at(1))] * 100, [], NOW)
     assert summary["matched_lines"] == 100
     assert len(summary["samples"]) == 20
     assert all(len(s["line"]) == LOG_LINE_MAX_CHARS for s in summary["samples"])
