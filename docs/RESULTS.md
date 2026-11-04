@@ -76,8 +76,22 @@ Read this result with care:
 - Access logs of failed requests filled the 200-line log query in every recorded fault, crowding out the lines that name a cause. Known causes now have their own query.
 - A log line from before a fix still counted as recent, because the recent window was longer than the wait before the first look.
 
+**`recovered` no longer ignores requests that are still failing (2026-11-05, kind).** It relied only on logs, so it now also needs a 45-second error rate below 5%, and it is low confidence if that rate can't be read. If requests are still failing, the report is `errors_unexplained` at low confidence, and older log lines are mentioned as possibly unrelated.
+
+To test this, Redis was scaled to 0 for 45 s and restored, then 50% failures began. Investigations ran every 30 s for 5 minutes, and each bundle was replayed through the previous rules.
+
+| Round | Investigations | Previous rules | New rules |
+|---|---|---|---|
+| 1, one old Redis line in the logs | 7 with requests failing at about 40% | `recovered` (wrong) | `errors_unexplained` |
+| 1 | 3 others: 1 right after pods were replaced, 2 after the line aged out | same as new | `dependency_unreachable` (wrong), then `errors_unexplained` twice |
+| 2, no Redis line was logged, so the fix wasn't exercised | 10 | same as new | `healthy` (wrong, right after pods were replaced), then `errors_unexplained` 9 times |
+
+The full alert set was also rerun with the new check, plus this scenario. All 5 earlier faults gave the same leading finding as before, including `recovered` for the late alert (45-second rate 0.0, 2-minute rate 8.5%). The new scenario's alert gave `errors_unexplained`, but its Redis lines had aged out, so that report doesn't test the fix. Every alert report in these runs matched what the previous rules would have said. This is one run of each fault.
+
 **Limits:**
-- `recovered` can be wrong during a live fault. It relies on no known failure being logged in the last 45 s, and Redis failures are logged rarely: 2 lines in 5 minutes at about 50% errors. A network fault that leaves the pods ready and logs this rarely could be reported as `recovered`. No scenario tests this yet. The report does ask the reader to confirm the error rate is falling.
+- The `recovered` check above was seen working in only one fault, on on-demand investigations. Alerts arrived too late to test it: by then the old lines had left the 5-minute log window.
+- In the first seconds after pods are replaced, a report can be wrong, because the rates are still 0. One said `dependency_unreachable` from an old line and another said `healthy` with 7 serving pods unready.
+- Notifications are limited to one per finding category every 30 minutes, and a different fault in the same category counts as a repeat. A second `errors_unexplained` fault 25 minutes after the first was saved but not sent to Discord.
 - An investigation sees the state when it runs. Error rates and p95 use 2-minute or longer windows, so they lag behind a fix: the `recovered` report above still showed a 32% error rate.
 - The 9 recorded fixtures predate the log query fix, so their log evidence still has the crowding described above.
 - Discord delivery is unit-tested only.
