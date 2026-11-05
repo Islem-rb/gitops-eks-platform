@@ -63,12 +63,18 @@ class ReportStore:
         return Report.model_validate(json.loads(path.read_text())) if path.exists() else None
 
 
+def _changes_line(report: Report) -> str:
+    if report.revert.pr_url:
+        return f"Proposed revert, needs your review: {report.revert.pr_url} Nothing else changed."
+    return "No changes were made."
+
+
 def _render_analysis(report: Report, primary: Finding) -> str:
     """The rules lead, because the model can contradict them. Its notes are cut first if long."""
     analysis = report.analysis
     footer = (
         f"AI notes can be wrong; check the cited evidence. Report id: {report.id}. "
-        "No changes made."
+        f"{_changes_line(report)}"
     )
     lines = [
         f"**{primary.title}** ({primary.category}, {primary.confidence} confidence)",
@@ -106,8 +112,8 @@ def render(report: Report) -> str:
     lines.append(f"Evidence: {', '.join(primary.evidence_ids)}")
     if len(report.findings) > 1:
         lines.append("Also: " + ", ".join(f.category for f in report.findings[1:]))
-    lines.append(f"Report id: {report.id}. No changes were made.")
-    return "\n".join(lines)[:DISCORD_LIMIT]
+    footer = f"Report id: {report.id}. {_changes_line(report)}"
+    return "\n".join(lines)[: DISCORD_LIMIT - len(footer) - 1] + "\n" + footer
 
 
 def notify(client: httpx.Client, webhook_url: str, report: Report) -> None:

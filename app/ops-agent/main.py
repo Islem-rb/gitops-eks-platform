@@ -8,7 +8,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Re
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 from pydantic import BaseModel
 
-from agent import llm
+from agent import llm, revert
 from agent.collectors import changes, kubernetes, loki, prometheus
 from agent.models import Evidence, Report
 from agent.queries import NAMESPACE
@@ -32,6 +32,8 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
 LLM_MODEL = os.getenv("LLM_MODEL", "")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 LLM_DAILY_BUDGET_USD = float(os.getenv("LLM_DAILY_BUDGET_USD", "1.0"))
+GITHUB_APP_ID = os.getenv("GITHUB_APP_ID", "")
+GITHUB_APP_KEY_FILE = os.getenv("GITHUB_APP_KEY_FILE", "/etc/ops-agent/github-app/private-key.pem")
 RUNBOOK_DIR = Path(os.getenv("RUNBOOK_DIR", "/app/runbooks"))
 ERROR_RATE_RUNBOOK = "api-high-error-rate.md"
 RUNBOOKS_BY_ALERT = {
@@ -46,6 +48,7 @@ REPEATED = Counter("ops_agent_alerts_repeated_total", "Resent alerts that were i
 SUPPRESSED = Counter("ops_agent_notifications_suppressed_total", "Findings already reported")
 LLM_CALLS = Counter("ops_agent_llm_calls_total", "LLM analysis attempts", ["status"])
 LLM_COST = Counter("ops_agent_llm_estimated_usd_total", "Estimated LLM spend")
+REVERTS = Counter("ops_agent_revert_proposals_total", "Revert proposal attempts", ["status"])
 
 app = FastAPI(title="ops-agent")
 store = ReportStore(REPORT_DIR)
@@ -112,6 +115,15 @@ def add_analysis(report: Report) -> None:
         LLM_COST.inc(outcome.usage.estimated_usd)
 
 
+def add_revert(report: Report) -> None:
+    """Propose a revert if the rules allow one. With no App key, this does nothing."""
+    with httpx.Client(base_url="https://api.github.com", timeout=20) as http:
+        report.revert = revert.propose(
+            http, GITHUB_APP_ID, _read_secret(GITHUB_APP_KEY_FILE), GITHUB_REPO, report
+        )
+    REVERTS.labels(report.revert.status).inc()
+
+
 def process_pending_alerts() -> None:
     """One at a time. Alerts that arrive during a run are handled together by the next one."""
     with _run_lock:
@@ -133,6 +145,7 @@ def process_pending_alerts() -> None:
         notified = tracker.should_notify(category)
         if notified:  # a repeated finding is not worth another paid analysis
             add_analysis(report)
+            add_revert(report)
         store.save(report)
         if notified:
             try:
@@ -143,7 +156,8 @@ def process_pending_alerts() -> None:
         else:
             SUPPRESSED.inc()
         print(
-            f"investigation {report.id}: {category} notified={notified} llm={report.llm_status}",
+            f"investigation {report.id}: {category} notified={notified} llm={report.llm_status} "
+            f"revert={report.revert.status}",
             flush=True,
         )
 

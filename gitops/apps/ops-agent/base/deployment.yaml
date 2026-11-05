@@ -42,6 +42,7 @@ spec:
             - { name: webhook-token, mountPath: /etc/ops-agent/webhook, readOnly: true }
             - { name: discord, mountPath: /etc/ops-agent/discord, readOnly: true }
             - { name: llm, mountPath: /etc/ops-agent/llm, readOnly: true }
+            - { name: github-app, mountPath: /etc/ops-agent/github-app, readOnly: true }
       volumes:
         - name: reports
           persistentVolumeClaim: { claimName: ops-agent-reports }
@@ -51,6 +52,8 @@ spec:
           secret: { secretName: ops-agent-discord, optional: true }
         - name: llm # with no key the agent sends rules-only reports
           secret: { secretName: ops-agent-llm, optional: true }
+        - name: github-app # with no key the agent never proposes a revert
+          secret: { secretName: ops-agent-github-app, optional: true }
 ---
 apiVersion: v1
 kind: Service
