@@ -1,0 +1,217 @@
+{
+ "provenance": "synthetic",
+ "bundle": {
+  "trigger": "manual",
+  "alerts": [
+   "ApiHighErrorRate"
+  ],
+  "evidence": [
+   {
+    "id": "k8s.pods",
+    "source": "k8s",
+    "data": [
+     {
+      "name": "api-1",
+      "app": "api",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0,
+      "revision": "stable111"
+     },
+     {
+      "name": "worker-1",
+      "app": "worker",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0
+     },
+     {
+      "name": "postgres-1",
+      "app": "postgres",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0
+     },
+     {
+      "name": "redis-1",
+      "app": "redis",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0
+     }
+    ]
+   },
+   {
+    "id": "k8s.events",
+    "source": "k8s",
+    "data": []
+   },
+   {
+    "id": "k8s.deployments",
+    "source": "k8s",
+    "data": [
+     {
+      "name": "postgres",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "redis",
+      "desired": 1,
+      "ready": 1
+     },
+     {
+      "name": "worker",
+      "desired": 1,
+      "ready": 1
+     }
+    ]
+   },
+   {
+    "id": "k8s.rollouts",
+    "source": "k8s",
+    "data": [
+     {
+      "name": "api",
+      "phase": "Healthy",
+      "aborted": false,
+      "stable_revision": "stable111",
+      "current_revision": "stable111"
+     }
+    ]
+   },
+   {
+    "id": "k8s.analysisruns",
+    "source": "k8s",
+    "data": []
+   },
+   {
+    "id": "k8s.system_pods",
+    "source": "k8s",
+    "data": [
+     {
+      "name": "coredns-1",
+      "app": "kube-dns",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0
+     },
+     {
+      "name": "coredns-2",
+      "app": "kube-dns",
+      "phase": "Running",
+      "ready": true,
+      "restarts": 0
+     }
+    ]
+   },
+   {
+    "id": "k8s.nodes",
+    "source": "k8s",
+    "data": [
+     {
+      "name": "node-1",
+      "ready": true,
+      "pressure": []
+     }
+    ]
+   },
+   {
+    "id": "prom.error_rate",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {},
+      "value": 0.4
+     }
+    ]
+   },
+   {
+    "id": "prom.error_rate_recent",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {},
+      "value": 0.0
+     }
+    ]
+   },
+   {
+    "id": "prom.errors_by_revision",
+    "source": "prom",
+    "data": []
+   },
+   {
+    "id": "prom.requests_by_revision",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {
+       "rollouts_pod_template_hash": "stable111"
+      },
+      "value": 40.0
+     }
+    ]
+   },
+   {
+    "id": "prom.latency_p95",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {},
+      "value": 0.02
+     }
+    ]
+   },
+   {
+    "id": "prom.api_targets_up",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {},
+      "value": 5.0
+     }
+    ]
+   },
+   {
+    "id": "prom.worker_error_rate",
+    "source": "prom",
+    "data": []
+   },
+   {
+    "id": "loki.errors",
+    "source": "loki",
+    "data": {
+     "matched_lines": 5,
+     "by_app": {
+      "api": 5
+     },
+     "signatures": {
+      "redis_unreachable": 5
+     },
+     "samples": [],
+     "recent_signatures": {}
+    }
+   },
+   {
+    "id": "changes.deploys",
+    "source": "changes",
+    "data": {
+     "application": "demo-kind",
+     "deploys": [
+      {
+       "revision": "aaaaaaaaaaaa",
+       "deployed_at": "2026-11-01T10:00:00Z",
+       "age_seconds": 90000
+      }
+     ]
+    }
+   },
+   {
+    "id": "changes.commits",
+    "source": "changes",
+    "data": []
+   }
+  ]
+ }
+}

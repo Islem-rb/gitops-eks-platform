@@ -12,7 +12,7 @@ from ..queries import (
     LOGQL_API_ANY,
     LOGQL_ERRORS,
     LOGQL_SIGNATURES,
-    RECENT_LOG_SECONDS,
+    RECENT_SECONDS,
     SIGNATURE_LINE_LIMIT,
     SIGNATURE_PATTERNS,
 )
@@ -33,7 +33,7 @@ def summarize(
     signatures: dict[str, int] = {}
     recent: dict[str, int] = {}
     by_app: dict[str, int] = {}
-    recent_after = now_ns - RECENT_LOG_SECONDS * 1_000_000_000
+    recent_after = now_ns - RECENT_SECONDS * 1_000_000_000
     for app, _, _ in lines:
         by_app[app] = by_app.get(app, 0) + 1
     for _, line, timestamp in cause_lines:

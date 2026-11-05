@@ -1,0 +1,3 @@
+category: "errors_unexplained"
+required_evidence: ["loki.errors", "prom.error_rate_recent"]
+must_mention: ["may be unrelated"]

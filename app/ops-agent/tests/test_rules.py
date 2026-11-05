@@ -1,3 +1,5 @@
+import pytest
+
 from agent.models import Bundle, Evidence
 from agent.rules import evaluate
 
@@ -141,6 +143,41 @@ def test_late_alert_after_recovery_is_not_called_a_live_fault():
     ready = ev("k8s.pods", [{"name": "a", "app": "api", "ready": True}])
     findings = evaluate(bundle(ready, CLEAN[1], CLEAN[2], logs, READY_DEPS, alerts=["ApiDown"]))
     assert [f.category for f in findings] == ["recovered"]
+
+
+RARE_LOGS = ev("loki.errors", {"signatures": {"redis_unreachable": 2}, "recent_signatures": {}})
+READY_API = ev("k8s.pods", [{"name": "a", "app": "api", "ready": True}])
+
+
+def test_requests_still_failing_are_not_called_recovered_or_blamed_on_old_lines():
+    failing = ev("prom.error_rate_recent", [{"labels": {}, "value": 0.5}])
+    high = ev("prom.error_rate", [{"labels": {}, "value": 0.4}])
+    findings = evaluate(bundle(READY_API, CLEAN[1], high, RARE_LOGS, READY_DEPS, failing))
+    assert [f.category for f in findings] == ["errors_unexplained"]
+    assert findings[0].confidence == "low"
+    assert "redis_unreachable, but they may be unrelated" in findings[0].explanation
+
+
+def test_requests_succeeding_again_confirm_recovery():
+    clean = ev("prom.error_rate_recent", [{"labels": {}, "value": 0.0}])
+    # The 2-minute rate is still high after a fix, and must not block this
+    old = ev("prom.error_rate", [{"labels": {}, "value": 0.32}])
+    findings = evaluate(bundle(READY_API, CLEAN[1], old, RARE_LOGS, READY_DEPS, clean))
+    assert findings[0].category == "recovered"
+    assert findings[0].confidence == "medium"
+
+
+@pytest.mark.parametrize(
+    "recent",
+    [
+        ev("prom.error_rate_recent", [{"labels": {}, "value": None}]),  # no traffic
+        Evidence(id="prom.error_rate_recent", source="test", ok=False, error="ConnectError"),
+    ],
+)
+def test_recovery_is_low_confidence_without_a_recent_error_rate(recent):
+    finding = evaluate(bundle(READY_API, CLEAN[1], CLEAN[2], RARE_LOGS, READY_DEPS, recent))[0]
+    assert (finding.category, finding.confidence) == ("recovered", "low")
+    assert any("no recent error rate" in u for u in finding.unknowns)
 
 
 def test_recent_failures_are_still_a_live_fault():

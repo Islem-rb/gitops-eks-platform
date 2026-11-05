@@ -134,6 +134,16 @@
     ]
    },
    {
+    "id": "prom.error_rate_recent",
+    "source": "prom",
+    "data": [
+     {
+      "labels": {},
+      "value": 0.0
+     }
+    ]
+   },
+   {
     "id": "prom.errors_by_revision",
     "source": "prom",
     "data": []
