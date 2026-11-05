@@ -196,7 +196,7 @@ def alertmanager_webhook(payload: AlertmanagerPayload, tasks: BackgroundTasks):
             continue
         if alert.status != "firing":
             continue
-        if tracker.is_new_alert(alert.fingerprint or name, alert.startsAt):
+        if tracker.is_new_alert(alert.fingerprint or name, alert.startsAt, name):
             accepted.append(name)
         else:
             REPEATED.inc()

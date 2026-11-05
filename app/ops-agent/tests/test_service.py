@@ -119,6 +119,17 @@ def test_one_of_two_alerts_resolving_does_not_end_the_incident():
     assert tracker.should_notify("dependency_down") is False
 
 
+def test_a_lingering_burn_alert_does_not_keep_the_incident_open():
+    # Seen on a real cluster: the slow burn alert was still firing 20 minutes after the fault
+    tracker = IncidentTracker(1800, clock=lambda: 0)
+    tracker.is_new_alert("errors", "t1", "ApiHighErrorRate")
+    tracker.is_new_alert("burn", "t1", "ApiErrorBudgetSlowBurn")
+    assert tracker.should_notify("errors_unexplained") is True
+    tracker.alert_resolved("errors")
+    tracker.is_new_alert("errors", "t2", "ApiHighErrorRate")
+    assert tracker.should_notify("errors_unexplained") is True
+
+
 def test_alert_that_resolves_during_its_run_does_not_silence_the_next_fault():
     tracker = IncidentTracker(1800, clock=lambda: 0)
     tracker.is_new_alert("a", "t1")
