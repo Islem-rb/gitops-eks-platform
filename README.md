@@ -3,7 +3,7 @@
 [![app](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/app.yml/badge.svg)](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/app.yml)
 [![iac-test](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/iac-test.yml/badge.svg)](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/iac-test.yml)
 
-A production-style delivery platform, built end to end: **a `git push` becomes a signed container image, is released to Kubernetes as a canary, is checked against live metrics, rolls itself back when it is bad, and can be restored after a disaster.** The AWS infrastructure is defined in Terraform and was created and destroyed in budgeted sessions on a free-plan account.
+A production-style delivery platform, built end to end: **a `git push` becomes a signed container image, is released to Kubernetes as a canary, is checked against live metrics, aborts itself when it is bad, leaving the old version serving, and can be restored after a disaster.** The AWS infrastructure is defined in Terraform and was created and destroyed in budgeted sessions on a free-plan account.
 
 The workload is a small job-queue app (frontend, api, worker, Postgres, Redis). The app is deliberately simple; the platform around it is the project.
 
@@ -91,7 +91,7 @@ All numbers come from two real EKS sessions (eu-central-1, Kubernetes 1.37, 2 x 
 
 **CI and supply chain (GitHub Actions)**
 - Tests, then a build matrix for api, worker and frontend: Trivy scan, SBOM, push to ECR.
-- AWS access through GitHub OIDC with tightly scoped roles. No long-lived keys anywhere.
+- AWS access through GitHub OIDC with tightly scoped roles. No long-lived AWS keys. CI does hold one deploy key, to commit image tags to the protected `main` branch.
 - Images are signed with cosign keyless signing. A step verifies the signature before signing, so rebuilding an unchanged digest is safe.
 - A final job bumps the image tag in `gitops/` with a bot commit. That commit touches only `gitops/**`, so it cannot trigger a loop.
 
