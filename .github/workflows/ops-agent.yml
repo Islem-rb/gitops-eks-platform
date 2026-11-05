@@ -128,13 +128,17 @@ jobs:
     needs: build
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
+    # Only main can read this environment's key, which is allowed past the rules on main
+    environment: gitops-deploy
     permissions:
-      contents: write
+      contents: read
     concurrency:
       group: gitops-bump
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
 
       - name: Update the image tag in the EKS overlay
         run: |
