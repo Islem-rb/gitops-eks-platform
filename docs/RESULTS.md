@@ -148,6 +148,23 @@ Read this result with care:
 
 **Not tested live:** that the bot can't push to `main`, merge or approve. That test was blocked because it included an unreviewed merge. It rests on configuration: the ruleset bypasses only the admin role and deploy keys, the App has no Workflows permission, and GitHub required a review on PR #28. Discord delivery wasn't tested either, because this cluster had no real webhook.
 
+## Revert pull request, second run (2026-11-05, kind and the real GitHub repo)
+Recorded for the demo video, with every command's output logged with timestamps.
+
+| Step | Result | Time after the push |
+|---|---|---|
+| Bad commit `d84bed1` pushed (`v10-bad`, 50% failures) | Pushed with the owner's bypass | 0 |
+| Canary | Aborted after 2 failed measurements (0.477, 0.470) | 67 s |
+| Agent | `ApiCanaryAborted` led to `canary_aborted`, and it opened PR #35 with `revert=proposed` | about 3 min |
+| PR #35 | The exact reverse of the bad commit. `gitops-validate` passed | |
+| Review and merge | Approved and merged under the owner's account | about 12 min 35 s |
+| Rollout | `Healthy` with `v9-eks` | 6 s after the merge |
+
+Read this result with care:
+- The 6 s comes partly from the recorder forcing an Argo CD refresh right after the merge, and the rollout returned to pods it was still running.
+- Unlike the first run, the `ApiCanaryAborted` alert was already in place.
+- The owner sent the approve-and-merge command to Claude, which ran it. The command came from a person, but the review wasn't timed or recorded.
+
 ## New faults reaching Discord (2026-11-05, kind)
 Notifications used to be limited to one per finding category every 30 minutes, so a different fault in the same category could be saved but never sent. The agent now also receives resolved alerts, and clears its memory once no short-window alert is firing. The 30-minute limit stays as a backstop.
 
