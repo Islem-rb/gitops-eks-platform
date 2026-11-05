@@ -1,0 +1,47 @@
+name: gitops-validate
+
+# No path filter: a required check that doesn't run leaves a pull request waiting forever.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  KUBECONFORM_VERSION: v0.7.0
+  KUBECONFORM_SHA256: c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3
+  CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+
+jobs:
+  gitops-validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL -o kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  kubeconform.tar.gz" | sha256sum --check --strict
+          tar xzf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Build and validate every kustomization
+        run: |
+          set -euo pipefail
+          for dir in $(find gitops -name kustomization.yaml -printf '%h\n' | sort); do
+            echo "::group::$dir"
+            kubectl kustomize "$dir" | kubeconform -strict -summary -verbose -ignore-missing-schemas \
+              -schema-location default -schema-location "$CRD_SCHEMAS"
+            echo "::endgroup::"
+          done
+
+      - name: Validate plain manifests
+        run: |
+          set -euo pipefail
+          # velero-values-kind.yaml holds Helm values, not a Kubernetes object
+          find gitops/argocd gitops/apps/monitoring-config gitops/apps/platform-eks -name '*.yaml' \
+            ! -name velero-values-kind.yaml -print0 |
+            xargs -0 kubeconform -strict -summary -verbose -ignore-missing-schemas \
+              -schema-location default -schema-location "$CRD_SCHEMAS"
