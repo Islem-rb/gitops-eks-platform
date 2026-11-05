@@ -91,7 +91,7 @@ All numbers come from two real EKS sessions (eu-central-1, Kubernetes 1.37, 2 x 
 
 **CI and supply chain (GitHub Actions)**
 - Tests, then a build matrix for api, worker and frontend: Trivy scan, SBOM, push to ECR.
-- AWS access through GitHub OIDC with tightly scoped roles. No long-lived keys anywhere.
+- AWS access through GitHub OIDC with tightly scoped roles. No long-lived AWS keys. CI does hold one deploy key, to commit image tags to the protected `main` branch.
 - Images are signed with cosign keyless signing. A step verifies the signature before signing, so rebuilding an unchanged digest is safe.
 - A final job bumps the image tag in `gitops/` with a bot commit. That commit touches only `gitops/**`, so it cannot trigger a loop.
 
