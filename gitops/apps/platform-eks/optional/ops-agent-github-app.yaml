@@ -1,0 +1,20 @@
+# Opt-in: Argo CD doesn't sync this folder. Without this key the agent never proposes a revert.
+# Once platform/ops-agent-github-app-key exists in Secrets Manager:
+#   kubectl apply -f gitops/apps/platform-eks/optional/ops-agent-github-app.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ops-agent-github-app
+  namespace: ops-agent
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: aws-secrets-manager
+  target:
+    name: ops-agent-github-app
+    creationPolicy: Owner
+  data:
+    - secretKey: private-key.pem
+      remoteRef:
+        key: platform/ops-agent-github-app-key

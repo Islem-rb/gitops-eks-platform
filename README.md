@@ -175,6 +175,7 @@ terraform init && terraform apply
 aws secretsmanager create-secret --name platform/app-db --secret-string '{"username":"app","password":"<generated>","database":"app"}'
 aws secretsmanager create-secret --name platform/discord-webhook --secret-string '<webhook-url>'
 aws secretsmanager create-secret --name platform/ops-agent-webhook-token --secret-string "$(openssl rand -hex 32)"   # Alertmanager will not start without it
+# optional agent keys: see gitops/apps/platform-eks/optional/, each file is applied by hand once its key exists
 
 # 3. bootstrap Argo CD, Rollouts and all applications
 cd ../../.. && ./scripts/eks-bootstrap.sh
