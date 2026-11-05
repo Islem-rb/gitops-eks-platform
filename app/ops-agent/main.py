@@ -188,10 +188,15 @@ def alertmanager_webhook(payload: AlertmanagerPayload, tasks: BackgroundTasks):
     accepted, repeated = [], []
     for alert in payload.alerts:
         # Alert content is untrusted: labels only select an incident, and only in our namespace
-        if alert.status != "firing" or alert.labels.get("namespace") != NAMESPACE:
+        if alert.labels.get("namespace") != NAMESPACE:
             continue
         name = alert.labels.get("alertname", "unknown")
-        if tracker.is_new_alert(alert.fingerprint or name, alert.startsAt):
+        if alert.status == "resolved":
+            tracker.alert_resolved(alert.fingerprint or name)
+            continue
+        if alert.status != "firing":
+            continue
+        if tracker.is_new_alert(alert.fingerprint or name, alert.startsAt, name):
             accepted.append(name)
         else:
             REPEATED.inc()

@@ -16,20 +16,25 @@ DISCORD_LIMIT = 1900
 ALERT_MEMORY_SECONDS = 86400
 # A symptom can sharpen into a cause once logs arrive, so these are worth a second look
 INCONCLUSIVE = {"unknown", "errors_unexplained", "crashloop"}
+# These look back hours and keep firing long after a fault, so they can't say an incident is open
+LONG_WINDOW_ALERTS = {"ApiErrorBudgetFastBurn", "ApiErrorBudgetSlowBurn"}
 
 
 class IncidentTracker:
     """Decides what is worth repeating. Alertmanager resends firing alerts, and one incident fires
-    several, so an investigation runs per new alert and a notice goes out per new finding."""
+    several, so an investigation runs per new alert and a notice goes out per new finding. Once
+    every short-window alert has resolved the incident is over, so the next fault is reported. The
+    window remains as a backstop for repeats, in case a resolved event is lost."""
 
     def __init__(self, window_seconds: float, clock: Callable[[], float] = time.monotonic):
         self._window = window_seconds
         self._clock = clock
         self._alerts: dict[tuple[str, str], float] = {}
         self._findings: dict[str, float] = {}
+        self._active: set[str] = set()
         self._lock = threading.Lock()
 
-    def is_new_alert(self, fingerprint: str, starts_at: str) -> bool:
+    def is_new_alert(self, fingerprint: str, starts_at: str, name: str = "") -> bool:
         key = (fingerprint, starts_at)
         with self._lock:
             now = self._clock()
@@ -38,13 +43,22 @@ class IncidentTracker:
             }
             is_new = key not in self._alerts
             self._alerts[key] = now
+            if name not in LONG_WINDOW_ALERTS:
+                self._active.add(fingerprint)
             return is_new
+
+    def alert_resolved(self, fingerprint: str) -> None:
+        with self._lock:
+            self._active.discard(fingerprint)
+            if not self._active:
+                self._findings.clear()
 
     def should_notify(self, category: str) -> bool:
         with self._lock:
             now = self._clock()
             last = self._findings.get(category)
-            self._findings[category] = now
+            if self._active:  # with none, the incident ended during this run, so don't remember it
+                self._findings[category] = now
             return last is None or now - last >= self._window
 
 

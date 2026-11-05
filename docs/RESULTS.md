@@ -91,7 +91,8 @@ The full alert set was also rerun with the new check, plus this scenario. All 5 
 **Limits:**
 - The `recovered` check above was seen working in only one fault, on on-demand investigations. Alerts arrived too late to test it: by then the old lines had left the 5-minute log window.
 - In the first seconds after pods are replaced, a report can be wrong, because the rates are still 0. One said `dependency_unreachable` from an old line and another said `healthy` with 7 serving pods unready.
-- Notifications are limited to one per finding category every 30 minutes, and a different fault in the same category counts as a repeat. A second `errors_unexplained` fault 25 minutes after the first was saved but not sent to Discord.
+- A fault that starts before the last fault's short-window alerts clear counts as the same incident. In one run a second fault started 2 seconds too early and its report wasn't sent to Discord.
+- After a fault ends, a late budget burn alert can send one more message. This is accepted, because noise is better than a missed incident.
 - An investigation sees the state when it runs. Error rates and p95 use 2-minute or longer windows, so they lag behind a fix: the `recovered` report above still showed a 32% error rate.
 - The 9 recorded fixtures predate the log query fix, so their log evidence still has the crowding described above.
 - Discord delivery is unit-tested only.
@@ -119,6 +120,18 @@ Read this result with care:
 **Deploys under the rules for `main`:** the first merge after the rules went on produced deploy commit `a713a68`, and GitHub logged `Bypassed rule violations`. Before that, on a throwaway branch with the same pull request rule, the Actions bot's push was rejected and a deploy key's push went through.
 
 **Not tested live:** that the bot can't push to `main`, merge or approve. That test was blocked because it included an unreviewed merge. It rests on configuration: the ruleset bypasses only the admin role and deploy keys, the App has no Workflows permission, and GitHub required a review on PR #28. Discord delivery wasn't tested either, because this cluster had no real webhook.
+
+## New faults reaching Discord (2026-11-05, kind)
+Notifications used to be limited to one per finding category every 30 minutes, so a different fault in the same category could be saved but never sent. The agent now also receives resolved alerts, and clears its memory once no short-window alert is firing. The 30-minute limit stays as a backstop.
+
+| Test | Result | What it shows |
+|---|---|---|
+| Second fault started as the first one's alerts were clearing | Second report not sent | The alerts still showed the first incident, so this test didn't cover the fix |
+| Waited for every alert to clear | Never started: `ApiErrorBudgetSlowBurn` was still firing after 20 minutes | **A flaw in the first version of the fix.** Long-window alerts could hold an incident open, so they no longer count |
+| Two faults, each after short-window alerts cleared | Both sent | Weak: different categories (`errors_unexplained`, `errors_after_release`), which the old code would also have sent |
+| Same category 5 minutes after the last report | Sent | The old code would have silenced this. Its trigger was `ApiErrorBudgetSlowBurn`, not the new fault's own alert |
+
+So the mechanism works on a real cluster, but no run showed a new fault's own alert getting through in the same category. A unit test covers that case. The cluster had no real webhook, so this shows the decision to send, not delivery.
 
 ## LLM report, local model (2026-11-04, `qwen3:8b` on Ollama, RTX 4060 8 GB)
 Replay only: 12 fixtures (9 recorded, 3 synthetic), 3 runs each, 36 requests on the laptop's GPU at no cost. The model never ran inside a cluster. The Claude API has not been measured, because no key was available.

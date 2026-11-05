@@ -62,7 +62,7 @@ spec:
               - name: ops-agent
                 webhook_configs:
                   - url: http://ops-agent.ops-agent.svc.cluster.local:8080/webhook/alertmanager
-                    send_resolved: false
+                    send_resolved: true # how the agent knows an incident has ended
                     http_config:
                       authorization:
                         type: Bearer
