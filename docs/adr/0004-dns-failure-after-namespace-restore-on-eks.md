@@ -20,6 +20,9 @@ restarted api and frontend pods then became Ready.
 - Third drill (EKS, 2026-10-25, second session): the corrected check reported a DNS failure after the restore
   (`network agent restart needed: yes`); data was back in 196 s and the app serving in 198 s after the restart. So the failure was
   seen on 2 of 2 EKS restores with a valid detector or manual proof, and on 0 of 1 kind restores.
+- Fourth drill (EKS, 2026-11-05): the check reported a DNS failure again; data was back in 185 s and the app serving in 187 s after
+  the restart. That makes 3 of 3 EKS restores with a valid detector or manual proof. `ops-agent` reported `dns_failure` from real logs,
+  and its evidence is now the recorded fixture for this scenario. The root cause is still not established.
 
 ## Decision
 Keep the corrected DNS check in `scripts/restore-drill.sh`. If DNS really fails after a restore, it restarts the `aws-node` pod on
