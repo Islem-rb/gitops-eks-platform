@@ -99,9 +99,68 @@ def test_resolved_and_other_namespace_alerts_are_ignored(api):
     assert api.collections == []
 
 
+def test_same_finding_after_the_incident_ended_is_a_new_incident():
+    # Seen on a real cluster: a second fault 25 minutes after the first never reached Discord
+    tracker = IncidentTracker(1800, clock=lambda: 0)
+    tracker.is_new_alert("a", "t1")
+    assert tracker.should_notify("errors_unexplained") is True
+    assert tracker.should_notify("errors_unexplained") is False
+    tracker.alert_resolved("a")
+    tracker.is_new_alert("a", "t2")
+    assert tracker.should_notify("errors_unexplained") is True
+
+
+def test_one_of_two_alerts_resolving_does_not_end_the_incident():
+    tracker = IncidentTracker(1800, clock=lambda: 0)
+    tracker.is_new_alert("a", "t1")
+    tracker.is_new_alert("b", "t1")
+    assert tracker.should_notify("dependency_down") is True
+    tracker.alert_resolved("a")
+    assert tracker.should_notify("dependency_down") is False
+
+
+def test_alert_that_resolves_during_its_run_does_not_silence_the_next_fault():
+    tracker = IncidentTracker(1800, clock=lambda: 0)
+    tracker.is_new_alert("a", "t1")
+    tracker.alert_resolved("a")
+    assert tracker.should_notify("recovered") is True
+    tracker.is_new_alert("a", "t2")
+    assert tracker.should_notify("recovered") is True
+
+
+def test_a_lost_resolved_event_still_ends_at_the_window():
+    now = [0.0]
+    tracker = IncidentTracker(1800, clock=lambda: now[0])
+    tracker.is_new_alert("a", "t1")
+    assert tracker.should_notify("errors_unexplained") is True
+    now[0] = 1801
+    assert tracker.should_notify("errors_unexplained") is True
+
+
+def test_resolved_alert_from_another_namespace_does_not_end_the_incident(api):
+    main.tracker.is_new_alert("a", "t1")
+    assert main.tracker.should_notify("dependency_down") is True
+    payload = {"alerts": [{"status": "resolved", "fingerprint": "a", "labels": {"namespace": "x"}}]}
+    api.post("/webhook/alertmanager", json=payload, headers=AUTH)
+    assert main.tracker.should_notify("dependency_down") is False
+
+
+def test_resolved_webhook_ends_the_incident_without_an_investigation(api):
+    main.tracker.is_new_alert("a", "t1")
+    assert main.tracker.should_notify("dependency_down") is True
+    payload = {
+        "alerts": [{"status": "resolved", "fingerprint": "a", "labels": {"namespace": "demo"}}]
+    }
+    response = api.post("/webhook/alertmanager", json=payload, headers=AUTH)
+    assert response.json() == {"accepted": [], "repeated": []}
+    main.tracker.is_new_alert("a", "t2")
+    assert main.tracker.should_notify("dependency_down") is True
+
+
 def test_same_finding_is_notified_once_but_a_different_one_gets_through():
     now = [0.0]
     tracker = IncidentTracker(600, clock=lambda: now[0])
+    tracker.is_new_alert("a", "t1")
     assert tracker.should_notify("dependency_down") is True
     now[0] = 60
     assert tracker.should_notify("dependency_down") is False
