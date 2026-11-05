@@ -67,6 +67,23 @@ class LLMUsage(BaseModel):
     estimated_usd: float
 
 
+class RevertProposal(BaseModel):
+    status: Literal[
+        "not_run",
+        "disabled",
+        "not_applicable",
+        "no_candidate",
+        "ambiguous",
+        "not_eligible",
+        "conflict",
+        "already_proposed",
+        "proposed",
+        "error",
+    ] = "not_run"
+    commit: str | None = None
+    pr_url: str | None = None
+
+
 class Report(BaseModel):
     id: str
     created_at: str = Field(default_factory=utcnow)
@@ -75,5 +92,6 @@ class Report(BaseModel):
     llm_status: str = "not_run"
     analysis: LLMAnalysis | None = None
     llm_usage: LLMUsage | None = None
+    revert: RevertProposal = RevertProposal()
     findings: list[Finding]
     bundle: Bundle

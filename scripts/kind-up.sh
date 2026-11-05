@@ -2,7 +2,7 @@
 # Local stack for evaluating the investigator: Argo CD, Rollouts, monitoring, Loki, Alloy, the demo
 # app and ops-agent. Argo CD follows the Git branch given in BRANCH, so push that branch first.
 # Discord gets a dummy URL unless DISCORD_WEBHOOK_URL is set, and the LLM stays off unless
-# ANTHROPIC_API_KEY is set. Remove it with: kind delete cluster --name ops-eval
+# ANTHROPIC_API_KEY is set. It never proposes a revert unless GITHUB_APP_KEY_FILE is set. Remove it with: kind delete cluster --name ops-eval
 set -euo pipefail
 cd "$(dirname "$0")/.."
 CLUSTER="${CLUSTER:-ops-eval}"; BRANCH="${BRANCH:-main}"
@@ -36,6 +36,11 @@ fi
 
 if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
   kubectl -n ops-agent create secret generic ops-agent-llm --from-literal=api-key="$ANTHROPIC_API_KEY"
+fi
+
+if [ -n "${GITHUB_APP_KEY_FILE:-}" ]; then
+  kubectl -n ops-agent create secret generic ops-agent-github-app \
+    --from-file=private-key.pem="$GITHUB_APP_KEY_FILE"
 fi
 
 for app in monitoring monitoring-config loki alloy demo-kind ops-agent-kind; do

@@ -14,3 +14,4 @@ patches:
         path: /spec/template/spec/containers/0/env
         value:
           - { name: ARGO_APP, value: demo-eks }
+          - { name: GITHUB_APP_ID, value: "5626599" }

@@ -250,7 +250,7 @@ def test_rules_lead_the_ai_notes_and_survive_a_long_report():
     notes = text.index("**AI notes**")
     assert text.index(primary.explanation) < notes < text.index("Redis is down.")
     assert len(text) <= DISCORD_LIMIT
-    assert "AI notes can be wrong" in text and "No changes made" in text
+    assert "AI notes can be wrong" in text and "No changes were made" in text
 
 
 def test_ai_notes_cite_their_evidence():
