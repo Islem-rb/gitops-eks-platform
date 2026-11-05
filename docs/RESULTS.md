@@ -97,6 +97,29 @@ The full alert set was also rerun with the new check, plus this scenario. All 5 
 - Discord delivery is unit-tested only.
 - `dns-after-restore` and `errors-after-release` still use hand-written fixtures. The DNS case needs an EKS session.
 
+## Revert pull request, end to end (2026-11-05, kind and the real GitHub repo)
+One run, with a bad release pushed to the real `main`. No EKS cluster was running.
+
+| Step | Result | Time (UTC) |
+|---|---|---|
+| Bad commit `9f39a66` pushed (`v8-bad`, 50% failures) | Pushed with the owner's bypass | 12:50:09 |
+| Canary | Aborted after 2 failed measurements (0.50, 0.41); stable pods kept serving | about 67 s later |
+| First attempt | **No alert and no investigation.** Overall errors peaked at 3.9%, under the 5% alert, and Prometheus wasn't scraping Argo Rollouts | until 13:13 |
+| Fix | New `ApiCanaryAborted` alert, applied to the test cluster from a branch | 13:13:23 |
+| Agent | Reported `canary_aborted` and opened PR #28, with `revert=proposed` | by 13:16:44 |
+| PR #28 | One file, 2 lines, the exact reverse of the bad commit. `gitops-validate` passed and the owner was requested as reviewer | |
+| Review and merge | Approved and merged by the owner, with no bypass needed | 13:21:08 |
+| Argo CD | Synced; rollout `Healthy` with `v9-eks` and fail rate 0 | 22 s after the merge |
+
+Read this result with care:
+- The agent only worked after a gap found by this test was fixed, so it shows the fix works, not how the agent handles an unseen fault.
+- The rollout was healthy so quickly because it returned to the stable version it was already running.
+- It was one run, with one commit in the window. With two or more, the agent opens nothing by design.
+
+**Deploys under the rules for `main`:** the first merge after the rules went on produced deploy commit `a713a68`, and GitHub logged `Bypassed rule violations`. Before that, on a throwaway branch with the same pull request rule, the Actions bot's push was rejected and a deploy key's push went through.
+
+**Not tested live:** that the bot can't push to `main`, merge or approve. That test was blocked because it included an unreviewed merge. It rests on configuration: the ruleset bypasses only the admin role and deploy keys, the App has no Workflows permission, and GitHub required a review on PR #28. Discord delivery wasn't tested either, because this cluster had no real webhook.
+
 ## LLM report, local model (2026-11-04, `qwen3:8b` on Ollama, RTX 4060 8 GB)
 Replay only: 12 fixtures (9 recorded, 3 synthetic), 3 runs each, 36 requests on the laptop's GPU at no cost. The model never ran inside a cluster. The Claude API has not been measured, because no key was available.
 

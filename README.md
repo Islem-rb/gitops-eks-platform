@@ -231,5 +231,5 @@ Stated plainly, because they matter:
 - **A DNS failure after a restore on EKS** reproduced on a second session; it is mitigated by a restart but its root cause is not known.
 - **Secret rotation is not automated.**
 - **The incident investigator has only run on kind** and has not been deployed to EKS.
-- **Revert pull requests are tested against a mocked GitHub only,** not yet end to end. See ADR 0006 for the limits.
+- **Revert pull requests have run end to end once, on kind,** after a test found that an aborted canary fired no alert. See `docs/RESULTS.md` and ADR 0006.
 - **Cost figures are estimates** from hourly prices, not billing data.

@@ -24,6 +24,7 @@ The agent has exactly one action: open a pull request that reverts one commit.
 - A revert can be wrong: the commit may only be close in time to the fault. The pull request says this is a correlation.
 - A closed pull request leaves its branch behind, which is what stops the same revert being proposed again. Deleting that branch allows it.
 - GitHub's Contents write permission also allows pushing to other branches. Only the ruleset protects `main`, so it must stay active.
+- It depends on an alert firing. A real abort peaked at 3.9% errors, under the 5% alert, so aborts need their own alert (`ApiCanaryAborted`).
 - Faults with no eligible commit, such as a dependency outage, get no proposal.
 
 ## Alternatives considered

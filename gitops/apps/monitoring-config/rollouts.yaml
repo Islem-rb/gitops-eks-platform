@@ -1,0 +1,34 @@
+# A canary abort protects users so well that overall errors can stay under the error rate alerts:
+# 3.9% at peak in a real abort. So it needs its own signal, or nothing investigates it.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argo-rollouts
+  namespace: argo-rollouts
+spec:
+  selector:
+    matchLabels: { app.kubernetes.io/name: argo-rollouts-metrics }
+  namespaceSelector:
+    matchNames: [argo-rollouts]
+  endpoints:
+    - port: metrics
+      interval: 15s
+      honorLabels: true # keep the rollout's namespace, not the controller's
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-rollouts
+  namespace: monitoring
+spec:
+  groups:
+    - name: demo-rollouts
+      rules:
+        - alert: ApiCanaryAborted
+          expr: rollout_info{namespace="demo",name="api",phase="Abort"} == 1
+          for: 30s
+          labels: { severity: warning, namespace: demo, app: api }
+          annotations:
+            summary: "API canary release aborted"
+            runbook_url: "https://github.com/Islem-rb/gitops-eks-platform/blob/main/docs/runbooks/canary-aborted.md"
+            description: "The stable version is still serving. Git still holds the failed release."
