@@ -10,7 +10,7 @@ kubectl -n argocd scale statefulset/argocd-application-controller --replicas=0 2
 kubectl -n argocd delete applications --all --wait=false 2>/dev/null
 
 echo "== 2. delete workloads, PVCs and any LoadBalancer services"
-for ns in demo monitoring loki velero; do
+for ns in demo monitoring loki velero ops-agent; do
   kubectl delete ns "$ns" --wait=false 2>/dev/null
 done
 kubectl delete svc -A -l '!kubernetes.io/cluster-service' --field-selector spec.type=LoadBalancer 2>/dev/null
