@@ -3,7 +3,7 @@
 [![app](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/app.yml/badge.svg)](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/app.yml)
 [![iac-test](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/iac-test.yml/badge.svg)](https://github.com/Islem-rb/gitops-eks-platform/actions/workflows/iac-test.yml)
 
-A production-style delivery platform, built end to end: **a `git push` becomes a signed container image, is released to Kubernetes as a canary, is checked against live metrics, rolls itself back when it is bad, and can be restored after a disaster.** The AWS infrastructure is defined in Terraform and was created and destroyed in budgeted sessions on a free-plan account.
+A production-style delivery platform, built end to end: **a `git push` becomes a signed container image, is released to Kubernetes as a canary, is checked against live metrics, aborts itself when it is bad, leaving the old version serving, and can be restored after a disaster.** The AWS infrastructure is defined in Terraform and was created and destroyed in budgeted sessions on a free-plan account.
 
 The workload is a small job-queue app (frontend, api, worker, Postgres, Redis). The app is deliberately simple; the platform around it is the project.
 
