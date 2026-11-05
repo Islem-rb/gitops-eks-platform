@@ -95,8 +95,35 @@ The full alert set was also rerun with the new check, plus this scenario. All 5 
 - After a fault ends, a late budget burn alert can send one more message. This is accepted, because noise is better than a missed incident.
 - An investigation sees the state when it runs. Error rates and p95 use 2-minute or longer windows, so they lag behind a fix: the `recovered` report above still showed a 32% error rate.
 - The 9 recorded fixtures predate the log query fix, so their log evidence still has the crowding described above.
-- Discord delivery is unit-tested only.
-- `dns-after-restore` and `errors-after-release` still use hand-written fixtures. The DNS case needs an EKS session.
+- `errors-after-release` still uses a hand-written fixture.
+
+## Incident investigator on EKS (2026-11-05, eu-central-1, 2 x m7i-flex.large)
+The agent's first run on EKS, about 70 minutes from `terraform apply` to the end of `terraform destroy`. Roughly $0.60 at the usual $0.50 per hour; billing data wasn't available yet.
+
+| Test | Trigger | Report |
+|---|---|---|
+| No fault | On demand | `healthy` |
+| Redis scaled to 0 | `ApiHighErrorRate` | `dependency_down` |
+| Trailing alert after Redis returned | `ApiHighLatencyP95` | `latency_high` |
+| `allow-postgres` NetworkPolicy deleted, enforced by the VPC CNI | `ApiDown` | `dependency_unreachable` |
+| Namespace `demo` deleted and restored, DNS failing | `ApiDown` | `dns_failure` |
+
+**Discord delivery works.** The owner confirmed that the first 3 agent messages arrived in the channel. The `dns_failure` message was logged as sent, with no failure, but wasn't checked in the channel.
+
+**The DNS failure after a restore happened again (ADR 0004).** The drill's check found the failure, and the agent's restart was needed. Data was back in 185 s and the app serving in 187 s. Investigations ran every 15 s through the drill:
+- 8 in a row reported `dns_failure`, with up to 46 matching log lines, then `recovered` once the lines stopped.
+- `tests/scenarios/dns-after-restore/fixture.json` is now a real recording from this run.
+- This shows what the agent sees, not why DNS fails. The cause is still unknown.
+
+Also found in this run:
+- One API request got `HTTP 429` from the EKS API server, so `k8s.analysisruns` was missing from the `healthy` report. That evidence isn't required for a `healthy` result, and collectors don't retry.
+- `platform-eks` shows `Degraded`, because the optional LLM and GitHub App keys aren't in Secrets Manager. The agent runs without them, but Argo CD reports a problem that isn't one.
+- Revert pull requests weren't tested on EKS, because the App key was left out on purpose.
+- This is one run of each fault. These reports weren't re-scored against the expected results; they were compared by hand.
+
+**Teardown:** `terraform destroy` removed all 41 resources. A direct check of AWS found no clusters, instances, EBS volumes, NAT gateways, elastic IPs, load balancers or VPCs. The agent's report volume was removed too, after a fix to the teardown script.
+
+**Cost figures in this file are estimates.** AWS billing shows $3.12 of usage for the whole account in October, covered by credits. That is more than the estimates for those two sessions, and the file doesn't say how much of it came from always-on items such as image and backup storage.
 
 ## Revert pull request, end to end (2026-11-05, kind and the real GitHub repo)
 One run, with a bad release pushed to the real `main`. No EKS cluster was running.
