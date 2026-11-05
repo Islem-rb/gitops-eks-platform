@@ -117,7 +117,7 @@ The agent's first run on EKS, about 70 minutes from `terraform apply` to the end
 
 Also found in this run:
 - One API request got `HTTP 429` from the EKS API server, so `k8s.analysisruns` was missing from the `healthy` report. That evidence isn't required for a `healthy` result, and collectors don't retry.
-- `platform-eks` shows `Degraded`, because the optional LLM and GitHub App keys aren't in Secrets Manager. The agent runs without them, but Argo CD reports a problem that isn't one.
+- `platform-eks` shows `Degraded`, because the optional LLM and GitHub App keys aren't in Secrets Manager. The agent runs without them, but Argo CD reports a problem that isn't one. Changed after this run: those two secrets moved to `gitops/apps/platform-eks/optional/`, which Argo CD doesn't sync. No EKS run has confirmed the new health status yet.
 - Revert pull requests weren't tested on EKS, because the App key was left out on purpose.
 - This is one run of each fault. These reports weren't re-scored against the expected results; they were compared by hand.
 

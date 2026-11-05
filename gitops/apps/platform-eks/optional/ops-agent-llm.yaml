@@ -1,0 +1,20 @@
+# Opt-in: Argo CD doesn't sync this folder. Without this key the agent sends rules-only reports.
+# Once platform/ops-agent-anthropic-key exists in Secrets Manager:
+#   kubectl apply -f gitops/apps/platform-eks/optional/ops-agent-llm.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ops-agent-llm
+  namespace: ops-agent
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: aws-secrets-manager
+  target:
+    name: ops-agent-llm
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: platform/ops-agent-anthropic-key
