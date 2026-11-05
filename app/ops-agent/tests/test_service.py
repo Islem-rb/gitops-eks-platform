@@ -202,3 +202,66 @@ def test_no_discord_url_sends_nothing():
     sent = []
     notify(discord_client(sent), "", report())
     assert sent == []
+
+
+def test_no_api_key_leaves_a_rules_report(api, monkeypatch):
+    monkeypatch.setattr(main, "LLM_API_KEY_FILE", "/does/not/exist")
+    response = api.post("/investigations?llm=true", headers=AUTH)
+    assert response.status_code == 200
+    assert response.json()["llm_status"] == "disabled"
+    assert response.json()["analysis"] is None
+
+
+def test_llm_failure_keeps_the_rules_findings(api, tmp_path, monkeypatch):
+    key = tmp_path / "key"
+    key.write_text("k")
+    monkeypatch.setattr(main, "LLM_API_KEY_FILE", str(key))
+    monkeypatch.setattr(main.llm, "analyze", lambda *a: main.llm.Outcome("timeout"))
+    body = api.post("/investigations?llm=true", headers=AUTH).json()
+    assert body["llm_status"] == "timeout"
+    assert body["engine"] == "rules"
+    assert body["findings"][0]["category"] == "healthy"
+
+
+def test_runbook_comes_from_the_alert_and_the_category(tmp_path, monkeypatch):
+    (tmp_path / "api-high-error-rate.md").write_text("error runbook")
+    (tmp_path / "canary-aborted.md").write_text("canary runbook")
+    monkeypatch.setattr(main, "RUNBOOK_DIR", tmp_path)
+    by_alert = report()
+    by_alert.bundle.alerts = ["ApiHighErrorRate"]
+    assert main.runbook_for(by_alert) == "error runbook"
+    assert main.runbook_for(report(category="canary_aborted")) == "canary runbook"
+    assert main.runbook_for(report()) == ""
+
+
+def test_rules_lead_the_ai_notes_and_survive_a_long_report():
+    from agent.models import Hypothesis, LLMAnalysis
+    from agent.service import DISCORD_LIMIT, render
+
+    item = report()
+    item.analysis = LLMAnalysis(
+        summary="Redis is down. " * 500,
+        hypotheses=[Hypothesis(cause="No replicas", confidence="high", evidence_ids=["k8s.pods"])],
+        unknowns=[],
+        next_steps=["Check it."],
+    )
+    primary = item.findings[0]
+    text = render(item)
+    notes = text.index("**AI notes**")
+    assert text.index(primary.explanation) < notes < text.index("Redis is down.")
+    assert len(text) <= DISCORD_LIMIT
+    assert "AI notes can be wrong" in text and "No changes made" in text
+
+
+def test_ai_notes_cite_their_evidence():
+    from agent.models import Hypothesis, LLMAnalysis
+    from agent.service import render
+
+    item = report()
+    item.analysis = LLMAnalysis(
+        summary="s",
+        hypotheses=[Hypothesis(cause="c", confidence="low", evidence_ids=["k8s.pods"])],
+        unknowns=[],
+        next_steps=[],
+    )
+    assert "[k8s.pods]" in render(item)

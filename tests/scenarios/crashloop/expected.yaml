@@ -1,2 +1,3 @@
 category: "crashloop"
 required_evidence: ["k8s.pods"]
+llm: {"lead": ["worker"], "any": [["crash", "exit", "restart"]]}

@@ -14,3 +14,6 @@ __pycache__/
 # saved Terraform plans can embed variable values
 tfplan
 *.tfplan
+
+# Personal project guide, kept locally
+docs/guide/
